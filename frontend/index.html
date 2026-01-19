@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olymp.am - Online Olympiad Management System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🏆 Olymp.am</h1>
+            <p class="subtitle">Online Olympiad Management System for Armenian Schools</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul class="nav-menu">
+                <li><a href="#" data-page="home" class="active">Home</a></li>
+                <li><a href="#" data-page="problems">Problems</a></li>
+                <li><a href="#" data-page="users">Users</a></li>
+                <li><a href="#" data-page="about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div id="app-content">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Olymp.am - Armenian School Olympiad System</p>
+            <p class="server-status">
+                Server Status: <span id="server-status">Checking...</span>
+            </p>
+        </div>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
