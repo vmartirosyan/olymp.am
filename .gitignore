@@ -1,5 +1,6 @@
 # Build artifacts
 backend/build/
+backend/_codeql_build_dir/
 backend/lib/
 *.o
 *.a
@@ -33,3 +34,7 @@ Thumbs.db
 # Temporary files
 /tmp/
 *.tmp
+
+# CodeQL
+_codeql_detected_source_root
+_codeql_build_dir/
