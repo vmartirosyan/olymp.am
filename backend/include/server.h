@@ -20,7 +20,6 @@ private:
     bool running_;
     
     void handleClient(int client_socket);
-    std::string parseRequest(const std::string& request);
     std::string buildResponse(const std::string& body, const std::string& content_type = "text/plain", int status = 200);
 };
 
