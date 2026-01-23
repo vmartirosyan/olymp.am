@@ -311,13 +311,16 @@ const UI = {
      * Մասնակցի տողի ցուցադրում
      */
     renderParticipantRow(participant, index) {
+        const name = participant.name || `${participant.firstName || ''} ${participant.lastName || ''}`.trim() || 'Անհայտ';
+        const city = participant.city || '—';
+
         return `
             <tr data-grade="${participant.grade}">
                 <td>${index}</td>
-                <td><strong>${participant.name}</strong></td>
+                <td><strong>${name}</strong></td>
                 <td>${participant.school}</td>
                 <td>${participant.grade}-րդ դասարան</td>
-                <td>${participant.city}</td>
+                <td>${city}</td>
                 <td>${participant.registeredCompetitions ? participant.registeredCompetitions.length : 0}</td>
                 <td>
                     <button class="btn" style="padding: 0.3rem 0.8rem; font-size: 0.85rem;" 
@@ -364,6 +367,16 @@ const UI = {
         const leaderboard = API.getLeaderboard(competitionId);
         const competition = API.getCompetitionById(competitionId);
         
+        if (competition.status !== 'completed') {
+            return `
+                <div class="empty-state">
+                    <div class="empty-state-icon">⏳</div>
+                    <h3>Արդյունքները դեռ հասանելի չեն</h3>
+                    <p>Մրցույթը դեռ ընթացքի մեջ է: Արդյունքները հասանելի կլինեն մրցույթի ավարտից հետո:</p>
+                </div>
+            `;
+        }
+
         if (leaderboard.length === 0) {
             return `
                 <div class="empty-state">
@@ -384,7 +397,7 @@ const UI = {
                         <div class="stat-card ${index === 0 ? '' : index === 1 ? 'green' : 'orange'}">
                             <div class="stat-number">${index === 1 ? '🥈' : index === 2 ? '🥉' : '🥇'}</div>
                             <div class="stat-label">${entry.participantName}</div>
-                            <div style="font-size: 1.5rem; margin-top: 0.5rem;">${entry.totalScore} միավոր</div>
+                            <div style="font-size: 1.5rem; margin-top: 0.5rem;">${entry.score !== undefined ? entry.score : (entry.totalScore || 0)} միավոր</div>
                         </div>
                     `).join('')}
                 </div>
@@ -409,7 +422,7 @@ const UI = {
                                 </td>
                                 <td><strong>${entry.participantName}</strong></td>
                                 <td>${entry.school}</td>
-                                <td><strong>${entry.totalScore}</strong></td>
+                                <td><strong>${entry.score !== undefined ? entry.score : (entry.totalScore || 0)}</strong></td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -763,6 +776,7 @@ const UI = {
      */
     renderAnswerSheetModal(competitionId) {
         const competition = API.getCompetitionById(competitionId);
+        const participants = API.getParticipantsByCompetition(competitionId);
         
         return `
             <div class="modal-header">
@@ -813,7 +827,7 @@ const UI = {
                 <p>Մրցույթ՝ <strong>${competition.name}</strong></p>
                 
                 <div style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                    ⚠️ Ուշադրություն. Խնդրում ենք վերբեռնել միայն սկանավորված պատասխանաթերթիկը (PDF կամ JPG ձևաչափով):
+                    ⚠️ Ուշադրություն. Խնդրում ենք վերբեռնել միայն սկանավորված պատասխանաթերթիկը (JPG կամ PNG ձևաչափով):
                 </div>
 
                 <div class="instructions">
@@ -842,12 +856,23 @@ const UI = {
                 
                 <form id="scan-upload-form">
                     <input type="hidden" id="as-comp-id" value="${competitionId}">
+
+                    <div style="margin-bottom: 20px;">
+                        <label for="as-participant-id" style="font-weight: bold; display: block; margin-bottom: 5px;">Ընտրեք մասնակցին:</label>
+                        <select id="as-participant-id" class="search-input" style="width: 100%; padding: 10px;">
+                            <option value="">-- Ընտրեք --</option>
+                            ${participants.map(p => {
+                                const name = p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Անհայտ';
+                                return `<option value="${p.id}">${name} (${p.grade}-րդ դասարան)</option>`;
+                            }).join('')}
+                        </select>
+                    </div>
                     
                     <div class="upload-area" onclick="document.getElementById('file-input').click()">
                         <div class="upload-icon">📤</div>
                         <h3>Սեղմեք կամ գցեք ֆայլը այստեղ</h3>
-                        <p style="color: #666;">JPG, PNG կամ PDF (max 5MB)</p>
-                        <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.pdf" style="display: none" onchange="UI.handleFileSelect(this)">
+                        <p style="color: #666;">JPG կամ PNG (max 5MB)</p>
+                        <input type="file" id="file-input" accept=".jpg,.jpeg,.png" style="display: none" onchange="UI.handleFileSelect(this)">
                         <div id="file-name" style="margin-top: 10px; font-weight: bold; color: #2196F3;"></div>
                     </div>
                 </form>

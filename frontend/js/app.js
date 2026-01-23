@@ -12,9 +12,6 @@ const App = {
     init() {
         console.log('Սկսվում է Olymp.am հավելվածը...');
         
-        // Տվյալների սկզբնավորում
-        API.init();
-        
         // Load saved templates from localStorage
         UI.init();
         
@@ -196,6 +193,21 @@ const App = {
     },
 
     /**
+     * Terminate the competition (Mark as completed)
+     */
+    finishCompetition(competitionId) {
+        if (confirm('Դուք վստա՞հ եք, որ ցանկանում եք ավարտել մրցույթը: Սա թույլ կտա դիտել արդյունքները:')) {
+            API.updateCompetition(competitionId, { status: 'completed' });
+            this.closeModal();
+            UI.showSuccess('Մրցույթն ավարտվեց: Արդյունքներն այժմ հասանելի են:');
+            // Refresh current view if needed
+            const currentPage = document.querySelectorAll('.nav-links a.active')[0]?.getAttribute('data-page');
+            if (currentPage === 'competitions') this.navigateTo('competitions');
+            if (currentPage === 'results') this.navigateTo('results');
+        }
+    },
+
+    /**
      * Ցուցադրել մրցույթի մանրամասները
      */
     viewCompetitionDetails(competitionId) {
@@ -244,10 +256,14 @@ const App = {
                     </div>
                 ` : '<p>Այս մրցույթի համար դեռ խնդիրներ չկան</p>'}
                 
+
                 <h3 style="margin-top: 1.5rem;">👥 Գրանցված մասնակիցներ (${participants.length})</h3>
                 ${participants.length > 0 ? `
                     <ul>
-                        ${participants.slice(0, 10).map(p => `<li>${p.name} - ${p.school}</li>`).join('')}
+                        ${participants.slice(0, 10).map(p => {
+                            const name = p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Անհայտ';
+                            return `<li>${name} - ${p.school}</li>`;
+                        }).join('')}
                         ${participants.length > 10 ? `<li>և ${participants.length - 10} այլ մասնակիցներ...</li>` : ''}
                     </ul>
                 ` : '<p>Դեռ գրանցված մասնակիցներ չկան</p>'}
@@ -260,6 +276,7 @@ const App = {
                 ` : ''}
                 ${competition.status === 'active' ? `
                     <button class="btn btn-warning" onclick="App.closeModal(); App.showAnswerSheetModal(${competitionId});">📝 Լրացնել պատասխանները</button>
+                    <button class="btn btn-danger" style="margin-left: 10px;" onclick="App.finishCompetition(${competitionId})">🏁 Ավարտել մրցույթը</button>
                 ` : ''}
             </div>
         `;
@@ -341,8 +358,14 @@ const App = {
      */
     submitAnswerSheetScan() {
         const competitionId = parseInt(document.getElementById('as-comp-id').value);
+        const participantId = document.getElementById('as-participant-id').value;
         const fileInput = document.getElementById('file-input');
         
+        if (!participantId) {
+            UI.showError('Խնդրում ենք ընտրել մասնակցին');
+            return;
+        }
+
         if (!fileInput.files.length) {
             UI.showError('Խնդրում ենք ընտրել ֆայլը');
             return;
@@ -356,7 +379,7 @@ const App = {
             
             const submission = {
                 competitionId,
-                userId: 1, // Mock user
+                userId: parseInt(participantId),
                 filename: file.name,
                 timestamp: new Date().toISOString(),
                 status: 'pending_review',
@@ -521,16 +544,20 @@ const App = {
         const modal = document.getElementById('modal-container');
         const modalContent = document.getElementById('modal-content');
         
+        const displayName = participant.name || 
+            ((participant.firstName || '') + ' ' + (participant.lastName || '')).trim() || 
+            'Անհայտ';
+        
         modalContent.innerHTML = `
             <div class="modal-header">
-                <h2>👤 ${participant.name}</h2>
+                <h2>👤 ${displayName}</h2>
                 <button class="modal-close" onclick="App.closeModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p><strong>Էլ. հասցե՝</strong> ${participant.email}</p>
-                <p><strong>Դպրոց՝</strong> ${participant.school}</p>
+                <p><strong>Էլ. հասցե՝</strong> ${participant.email || '—'}</p>
+                <p><strong>Դպրոց՝</strong> ${participant.school || '—'}</p>
                 <p><strong>Դասարան՝</strong> ${participant.grade}-րդ դասարան</p>
-                <p><strong>Քաղաք/Մարզ՝</strong> ${participant.city}</p>
+                <p><strong>Քաղաք/Մարզ՝</strong> ${participant.city || '—'}</p>
                 
                 <h3 style="margin-top: 1.5rem;">🏆 Գրանցված մրցույթներ</h3>
                 ${participant.registeredCompetitions && participant.registeredCompetitions.length > 0 ? `
@@ -558,8 +585,8 @@ const App = {
                                 return `
                                     <tr>
                                         <td>${comp ? comp.name : 'Մրցույթը չի գտնվել'}</td>
-                                        <td>${r.rank}</td>
-                                        <td>${r.totalScore}</td>
+                                        <td>${r.rank || '—'}</td>
+                                        <td>${r.score !== undefined ? r.score : (r.totalScore !== undefined ? r.totalScore : '—')}</td>
                                     </tr>
                                 `;
                             }).join('')}

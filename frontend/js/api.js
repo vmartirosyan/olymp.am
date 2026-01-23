@@ -1,40 +1,49 @@
 /**
- * API Client for Olympiad Demo Application
- * Օլիմպիադայի դեմո հավելվածի (localStorage)
+ * Base Data Provider Interface
  */
+class DataProvider {
+    getCompetitions() {}
+    getCompetitionById(id) {}
+    // ... define other methods ...
+}
 
-const API = {
-    // LocalStorage բանալիներ
-    STORAGE_KEYS: {
-        COMPETITIONS: 'olymp_competitions',
-        PROBLEMS: 'olymp_problems',
-        PARTICIPANTS: 'olymp_participants',
-        SCHOOLS: 'olymp_schools',
-        RESULTS: 'olymp_results',
-        SUBMISSIONS: 'olymp_submissions',
-        CURRENT_USER: 'olymp_current_user'
-    },
+/**
+ * LocalStorage Data Provider
+ */
+class LocalStorageProvider {
+    constructor() {
+        this.STORAGE_KEYS = {
+            COMPETITIONS: 'olymp_competitions',
+            PROBLEMS: 'olymp_problems',
+            PARTICIPANTS: 'olymp_participants',
+            SCHOOLS: 'olymp_schools',
+            RESULTS: 'olymp_results',
+            SUBMISSIONS: 'olymp_submissions',
+            CURRENT_USER: 'olymp_current_user'
+        };
+    }
 
-    /**
-     * Հավելվածի սկզբնավորում - Բեռնում է MockData-ն localStorage
-     * Force reset data to ensure translations are applied
-     */
     init() {
-        // Always overwrite with fresh MockData to ensure correct language
-        localStorage.setItem(this.STORAGE_KEYS.COMPETITIONS, JSON.stringify(MockData.competitions));
-        localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(MockData.problems));
-        localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(MockData.participants));
-        localStorage.setItem(this.STORAGE_KEYS.SCHOOLS, JSON.stringify(MockData.schools));
-        localStorage.setItem(this.STORAGE_KEYS.RESULTS, JSON.stringify(MockData.results));
-        
+        if (!localStorage.getItem(this.STORAGE_KEYS.COMPETITIONS)) {
+            localStorage.setItem(this.STORAGE_KEYS.COMPETITIONS, JSON.stringify(MockData.competitions));
+        }
+        if (!localStorage.getItem(this.STORAGE_KEYS.PROBLEMS)) {
+            localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(MockData.problems));
+        }
+        if (!localStorage.getItem(this.STORAGE_KEYS.PARTICIPANTS)) {
+            localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(MockData.participants));
+        }
+        if (!localStorage.getItem(this.STORAGE_KEYS.SCHOOLS)) {
+            localStorage.setItem(this.STORAGE_KEYS.SCHOOLS, JSON.stringify(MockData.schools));
+        }
+        if (!localStorage.getItem(this.STORAGE_KEYS.RESULTS)) {
+            localStorage.setItem(this.STORAGE_KEYS.RESULTS, JSON.stringify(MockData.results));
+        }
         if(!localStorage.getItem(this.STORAGE_KEYS.SUBMISSIONS)) {
              localStorage.setItem(this.STORAGE_KEYS.SUBMISSIONS, JSON.stringify([]));
         }
-    },
+    }
 
-    /**
-     * Վերականգնել localStorage-ի տվյալները
-     */
     resetData() {
         localStorage.setItem(this.STORAGE_KEYS.COMPETITIONS, JSON.stringify(MockData.competitions));
         localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(MockData.problems));
@@ -42,188 +51,207 @@ const API = {
         localStorage.setItem(this.STORAGE_KEYS.SCHOOLS, JSON.stringify(MockData.schools));
         localStorage.setItem(this.STORAGE_KEYS.RESULTS, JSON.stringify(MockData.results));
         localStorage.setItem(this.STORAGE_KEYS.SUBMISSIONS, JSON.stringify([]));
+    }
+
+    getCompetitions() {
+        try {
+            const data = localStorage.getItem(this.STORAGE_KEYS.COMPETITIONS);
+            return (data && data !== "undefined") ? JSON.parse(data) : [];
+        } catch (e) {
+            console.error("Error parsing competitions:", e);
+            return [];
+        }
+    }
+
+    saveCompetitions(competitions) {
+        localStorage.setItem(this.STORAGE_KEYS.COMPETITIONS, JSON.stringify(competitions));
+    }
+
+    getProblems() {
+        const data = localStorage.getItem(this.STORAGE_KEYS.PROBLEMS);
+        if (!data || data === "undefined" || data === "null") return [];
+        try { return JSON.parse(data); } catch (e) { return []; }
+    }
+
+    saveProblems(problems) {
+        localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(problems));
+    }
+
+    getParticipants() {
+        const data = localStorage.getItem(this.STORAGE_KEYS.PARTICIPANTS);
+        return data ? JSON.parse(data) : [];
+    }
+
+    saveParticipants(participants) {
+        localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(participants));
+    }
+
+    getSchools() {
+        const data = localStorage.getItem(this.STORAGE_KEYS.SCHOOLS);
+        let schools = data ? JSON.parse(data) : [];
+        
+        // Auto-migration: If we find strings instead of objects, reset to new MockData
+        if (schools.length > 0 && typeof schools[0] === 'string') {
+            console.warn("Detected old school data format (strings), resetting to MockData objects.");
+            schools = MockData.schools; // Use the new structure from data.js
+            this.saveSchools(schools);
+        }
+        
+        return schools;
+    }
+
+    saveSchools(schools) {
+        localStorage.setItem(this.STORAGE_KEYS.SCHOOLS, JSON.stringify(schools));
+    }
+
+    getResults() {
+        const data = localStorage.getItem(this.STORAGE_KEYS.RESULTS);
+        return data ? JSON.parse(data) : [];
+    }
+
+    saveResults(results) {
+        localStorage.setItem(this.STORAGE_KEYS.RESULTS, JSON.stringify(results));
+    }
+
+    getSubmissions() {
+        const data = localStorage.getItem(this.STORAGE_KEYS.SUBMISSIONS);
+        return data ? JSON.parse(data) : [];
+    }
+
+    saveSubmissions(submissions) {
+        localStorage.setItem(this.STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
+    }
+
+    getCurrentUser() {
+        const data = localStorage.getItem(this.STORAGE_KEYS.CURRENT_USER);
+        return data ? JSON.parse(data) : null;
+    }
+
+    saveCurrentUser(user) {
+        localStorage.setItem(this.STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    }
+
+    removeCurrentUser() {
+        localStorage.removeItem(this.STORAGE_KEYS.CURRENT_USER);
+    }
+}
+
+// Remove global instance - we will inject it later
+// const dataProvider = new LocalStorageProvider();
+
+const API = {
+    provider: null,
+    STORAGE_KEYS: null, // Will be set from provider
+
+    init(provider) {
+        this.provider = provider;
+        this.STORAGE_KEYS = provider.STORAGE_KEYS;
+        this.provider.init();
+    },
+
+    resetData() {
+        this.provider.resetData();
     },
 
     // ==================== Մրցույթներ ====================
-
-    /**
-     * Ստանալ բոլոր մրցույթները
-     */
     getCompetitions() {
-        const data = localStorage.getItem(this.STORAGE_KEYS.COMPETITIONS);
-        try {
-            return (data && data !== "undefined") ? JSON.parse(data) : [];
-        } catch (e) {
-            console.error("Error parsing competitions data:", e);
-            return [];
-        }
+        return this.provider.getCompetitions();
     },
 
-    /**
-     * Ստանալ մրցույթը ըստ ID-ի
-     */
     getCompetitionById(id) {
-        const competitions = this.getCompetitions();
-        return competitions.find(c => c.id === parseInt(id));
+        return this.getCompetitions().find(c => c.id === parseInt(id));
     },
 
-    /**
-     * Ստանալ մրցույթները ըստ կարգավիճակի
-     */
     getCompetitionsByStatus(status) {
-        const competitions = this.getCompetitions();
-        return competitions.filter(c => c.status === status);
+        return this.getCompetitions().filter(c => c.status === status);
     },
 
-    /**
-     * Ավելացնել նոր մրցույթ
-     */
     addCompetition(competition) {
         const competitions = this.getCompetitions();
         competition.id = Math.max(...competitions.map(c => c.id), 0) + 1;
         competitions.push(competition);
-        localStorage.setItem(this.STORAGE_KEYS.COMPETITIONS, JSON.stringify(competitions));
+        this.provider.saveCompetitions(competitions);
         return competition;
     },
 
-    /**
-     * Թարմացնել մրցույթի տվյալները
-     */
     updateCompetition(id, updates) {
         const competitions = this.getCompetitions();
         const index = competitions.findIndex(c => c.id === parseInt(id));
         if (index !== -1) {
             competitions[index] = { ...competitions[index], ...updates };
-            localStorage.setItem(this.STORAGE_KEYS.COMPETITIONS, JSON.stringify(competitions));
+            this.provider.saveCompetitions(competitions);
             return competitions[index];
         }
         return null;
     },
 
     // ==================== Խնդիրներ ====================
-
-    /**
-     * Ստանալ բոլոր խնդիրները
-     */
     getProblems() {
-        const data = localStorage.getItem(this.STORAGE_KEYS.PROBLEMS);
-        if (!data || data === "undefined" || data === "null") {
-            return [];
-        }
-        try {
-            return JSON.parse(data);
-        } catch (e) {
-            console.error("Error parsing problems data:", e);
-            console.warn("Resetting corrupted problems data.");
-            // Optional: Auto-fix by clearing or resetting
-            // localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(MockData.problems));
-            return [];
-        }
+        return this.provider.getProblems();
     },
 
-    /**
-     * Ստանալ խնդիրը ըստ ID-ի
-     */
     getProblemById(id) {
-        const problems = this.getProblems();
-        return problems.find(p => p.id === parseInt(id));
+        return this.getProblems().find(p => p.id === parseInt(id));
     },
 
-    /**
-     * Ստանալ մրցույթի խնդիրները
-     */
     getProblemsByCompetition(competitionId) {
-        const problems = this.getProblems();
-        return problems.filter(p => p.competitionId === parseInt(competitionId));
+        return this.getProblems().filter(p => p.competitionId === parseInt(competitionId));
     },
 
-    /**
-     * Ստանալ խնդիրները ըստ բարդության
-     */
     getProblemsByDifficulty(difficulty) {
-        const problems = this.getProblems();
-        return problems.filter(p => p.difficulty === difficulty);
+        return this.getProblems().filter(p => p.difficulty === difficulty);
     },
 
-    /**
-     * Ավելացնել նոր խնդիր
-     */
     addProblem(problem) {
         const problems = this.getProblems();
         problem.id = Math.max(...problems.map(p => p.id), 0) + 1;
         problems.push(problem);
-        localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(problems));
+        this.provider.saveProblems(problems);
         return problem;
     },
 
     // ==================== Մասնակիցներ ====================
-
-    /**
-     * Ստանալ բոլոր մասնակիցներին
-     */
     getParticipants() {
-        const data = localStorage.getItem(this.STORAGE_KEYS.PARTICIPANTS);
-        return data ? JSON.parse(data) : [];
+        return this.provider.getParticipants();
     },
 
-    /**
-     * Ստանալ մասնակցին ըստ ID-ի
-     */
     getParticipantById(id) {
-        const participants = this.getParticipants();
-        return participants.find(p => p.id === parseInt(id));
+        return this.getParticipants().find(p => p.id === parseInt(id));
     },
 
-    /**
-     * Ստանալ մրցույթի մասնակիցներին
-     */
     getParticipantsByCompetition(competitionId) {
-        const participants = this.getParticipants();
-        return participants.filter(p => 
+        return this.getParticipants().filter(p => 
             p.registeredCompetitions && p.registeredCompetitions.includes(parseInt(competitionId))
         );
     },
 
-    /**
-     * Ստանալ դպրոցի մասնակիցներին
-     */
     getParticipantsBySchool(schoolId) {
-        const participants = this.getParticipants();
         const school = this.getSchoolById(schoolId);
         if (!school) return [];
-        return participants.filter(p => p.school === school.name);
+        return this.getParticipants().filter(p => p.school === school.name);
     },
 
-    /**
-     * Ավելացնել նոր մասնակից
-     */
     addParticipant(participant) {
         const participants = this.getParticipants();
         participant.id = Math.max(...participants.map(p => p.id), 0) + 1;
         participant.registeredCompetitions = participant.registeredCompetitions || [];
         participant.scores = participant.scores || {};
         participants.push(participant);
-        localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(participants));
+        this.provider.saveParticipants(participants);
         return participant;
     },
 
-    /**
-     * Թարմացնել մասնակցի տվյալները
-     */
     updateParticipant(id, updates) {
         const participants = this.getParticipants();
         const index = participants.findIndex(p => p.id === parseInt(id));
         if (index !== -1) {
             participants[index] = { ...participants[index], ...updates };
-            localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(participants));
+            this.provider.saveParticipants(participants);
             return participants[index];
         }
         return null;
     },
 
-    /**
-     * Գրանցել մասնակցին մրցույթին
-     */
     registerParticipantForCompetition(participantId, competitionId) {
         const participants = this.getParticipants();
         const index = participants.findIndex(p => p.id === parseInt(participantId));
@@ -233,7 +261,7 @@ const API = {
             }
             if (!participants[index].registeredCompetitions.includes(parseInt(competitionId))) {
                 participants[index].registeredCompetitions.push(parseInt(competitionId));
-                localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(participants));
+                this.provider.saveParticipants(participants);
             }
             return participants[index];
         }
@@ -241,105 +269,60 @@ const API = {
     },
 
     // ==================== Դպրոցներ ====================
-
-    /**
-     * Ստանալ բոլոր դպրոցները
-     */
     getSchools() {
-        const data = localStorage.getItem(this.STORAGE_KEYS.SCHOOLS);
-        return data ? JSON.parse(data) : [];
+        return this.provider.getSchools();
     },
 
-    /**
-     * Ստանալ դպրոցը ըստ ID-ի
-     */
     getSchoolById(id) {
-        const schools = this.getSchools();
-        return schools.find(s => s.id === parseInt(id));
+        return this.getSchools().find(s => s.id === parseInt(id));
     },
 
-    /**
-     * Ստանալ դպրոցները ըստ մարզի
-     */
     getSchoolsByRegion(region) {
-        const schools = this.getSchools();
-        return schools.filter(s => s.region === region);
+        return this.getSchools().filter(s => s.region === region);
     },
 
-    /**
-     * Ավելացնել նոր դպրոց
-     */
     addSchool(school) {
         const schools = this.getSchools();
         school.id = Math.max(...schools.map(s => s.id), 0) + 1;
         school.participantsCount = school.participantsCount || 0;
         school.averageScore = school.averageScore || 0;
         schools.push(school);
-        localStorage.setItem(this.STORAGE_KEYS.SCHOOLS, JSON.stringify(schools));
+        this.provider.saveSchools(schools);
         return school;
     },
 
     // ==================== Արդյունքներ ====================
-
-    /**
-     * Ստանալ բոլոր արդյունքները
-     */
     getResults() {
-        const data = localStorage.getItem(this.STORAGE_KEYS.RESULTS);
-        return data ? JSON.parse(data) : [];
+        return this.provider.getResults();
     },
 
-    /**
-     * Ստանալ մրցույթի արդյունքները
-     */
     getResultsByCompetition(competitionId) {
-        const results = this.getResults();
-        return results
+        return this.getResults()
             .filter(r => r.competitionId === parseInt(competitionId))
             .sort((a, b) => a.rank - b.rank);
     },
 
-    /**
-     * Ստանալ մասնակցի արդյունքները
-     */
     getResultsByParticipant(participantId) {
-        const results = this.getResults();
-        return results.filter(r => r.participantId === parseInt(participantId));
+        return this.getResults().filter(r => r.participantId === parseInt(participantId));
     },
 
-    /**
-     * Ավելացնել արդյունք
-     */
     addResult(result) {
         const results = this.getResults();
         results.push(result);
-        localStorage.setItem(this.STORAGE_KEYS.RESULTS, JSON.stringify(results));
+        this.provider.saveResults(results);
         return result;
     },
 
     // ==================== Լուծումներ (Submissions) ====================
-
-    /**
-     * Ստանալ բոլոր լուծումները
-     */
     getSubmissions() {
-        const data = localStorage.getItem('olymp_submissions');
-        return data ? JSON.parse(data) : [];
+        return this.provider.getSubmissions();
     },
 
-    /**
-     * Ստանալ խնդրի լուծումները
-     */
     getSubmissionsByProblem(problemId) {
-        const submissions = this.getSubmissions();
-        return submissions.filter(s => s.problemId === parseInt(problemId));
+        return this.getSubmissions().filter(s => s.problemId === parseInt(problemId));
     },
 
-    /**
-     * Ուղարկել պատասխանաթերթիկը
-     */
     submitAnswerSheet(submission) {
-        // submission = { competitionId, participantId, answers: { problemId: "answer" } }
         const submissions = this.getSubmissions();
         submission.id = Date.now();
         submission.timestamp = new Date().toISOString();
@@ -347,57 +330,54 @@ const API = {
         let totalScore = 0;
         const problems = this.getProblemsByCompetition(submission.competitionId);
         
-        // Grading logic (Mock)
         submission.results = {};
         problems.forEach(problem => {
              const userAnswer = submission.answers[problem.id];
              const correctAnswer = problem.correctAnswer;
-             
-             // Simple comparison logic
              let isCorrect = false;
              if (userAnswer && correctAnswer && userAnswer.toString().trim().toLowerCase() === correctAnswer.toString().trim().toLowerCase()) {
                  isCorrect = true;
              }
-             
              const points = isCorrect ? problem.points : 0;
              totalScore += points;
-             
-             submission.results[problem.id] = {
-                 userAnswer: userAnswer || '',
-                 isCorrect,
-                 points
-             };
+             submission.results[problem.id] = { userAnswer: userAnswer || '', isCorrect, points };
         });
         
         submission.totalScore = totalScore;
-        
         submissions.push(submission);
-        localStorage.setItem('olymp_submissions', JSON.stringify(submissions));
+        this.provider.saveSubmissions(submissions);
         return submission;
     },
 
-    /**
-     * Ստանալ առաջատարների աղյուսակը
-     */
     getLeaderboard(competitionId) {
-        const results = this.getResultsByCompetition(competitionId);
+        // Get results and sort by score descending
+        const results = this.getResults()
+            .filter(r => r.competitionId === parseInt(competitionId))
+            .sort((a, b) => (b.score || 0) - (a.score || 0));
+            
         const participants = this.getParticipants();
         
-        return results.map(r => {
+        return results.map((r, index) => {
             const participant = participants.find(p => p.id === r.participantId);
+            
+            // Prefer name from participant record, fallback to stored name in result, fallback to unknown
+            let name = 'Անհայտ մասնակից';
+            if (participant) {
+                name = participant.name || ((participant.firstName || '') + ' ' + (participant.lastName || '')).trim() || name;
+            } else if (r.participantName) {
+                name = r.participantName;
+            }
+            
             return {
                 ...r,
-                participantName: participant ? participant.name : 'Անհայտ մասնակից',
-                school: participant ? participant.school : 'Անհայտ դպրոց'
+                participantName: name,
+                school: participant ? participant.school : (r.school || 'Անհայտ դպրոց'),
+                rank: index + 1 // Assign rank dynamically based on sorted position
             };
         });
     },
 
     // ==================== Վիճակագրություն ====================
-
-    /**
-     * Ստանալ ընդհանուր վիճակագրությունը
-     */
     getStatistics() {
         const competitions = this.getCompetitions();
         const participants = this.getParticipants();
@@ -418,9 +398,6 @@ const API = {
         };
     },
 
-    /**
-     * Փնտրել մասնակիցներին
-     */
     searchParticipants(query) {
         const participants = this.getParticipants();
         const lowerQuery = query.toLowerCase();
@@ -431,9 +408,6 @@ const API = {
         );
     },
 
-    /**
-     * Փնտրել դպրոցները
-     */
     searchSchools(query) {
         const schools = this.getSchools();
         const lowerQuery = query.toLowerCase();
@@ -444,38 +418,24 @@ const API = {
         );
     },
 
-    /**
-     * Submit answer sheet (scan)
-     */
     uploadAnswerSheet(submission) {
-        const submissions = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SUBMISSIONS) || '[]');
+        const submissions = this.getSubmissions();
         submission.id = Date.now();
         submissions.push(submission);
-        localStorage.setItem(this.STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
+        this.provider.saveSubmissions(submissions);
         return submission;
     },
 
-    /**
-     * Get pending submissions
-     */
     getPendingSubmissions() {
-        const submissions = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SUBMISSIONS) || '[]');
-        return submissions.filter(s => s.status === 'pending_review');
+        return this.getSubmissions().filter(s => s.status === 'pending_review');
     },
 
-    /**
-     * Get submission by ID
-     */
     getSubmissionById(id) {
-        const submissions = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SUBMISSIONS) || '[]');
-        return submissions.find(s => s.id === parseInt(id));
+        return this.getSubmissions().find(s => s.id === parseInt(id));
     },
 
-    /**
-     * Grade a submission (Mock OMR)
-     */
     gradeSubmission(id, extractedAnswers) {
-        const submissions = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SUBMISSIONS) || '[]');
+        const submissions = this.getSubmissions();
         const index = submissions.findIndex(s => s.id === parseInt(id));
         
         if (index === -1) return null;
@@ -487,17 +447,14 @@ const API = {
         let totalScore = 0;
         const details = [];
 
-        // Grading logic similar to the previous text-based one
         for (const problem of problems) {
-            const userAnswer = extractedAnswers[problem.id]; // 1 or "1" or "text"
+            const userAnswer = extractedAnswers[problem.id];
             let isCorrect = false;
             let score = 0;
 
             if (userAnswer) {
-                // Normalize for comparison
                 const normUser = String(userAnswer).trim().toLowerCase();
                 const normCorrect = String(problem.correctAnswer).trim().toLowerCase();
-                
                 if (normUser === normCorrect) {
                     isCorrect = true;
                     score = problem.points;
@@ -514,54 +471,43 @@ const API = {
             });
         }
 
-        // Update submission
         submission.status = 'graded';
         submission.score = totalScore;
         submission.details = details;
         
-        // Save back
         submissions[index] = submission;
-        localStorage.setItem(this.STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
+        this.provider.saveSubmissions(submissions);
 
-        // Create a result entry for the Leaderboard
+        const participant = this.getParticipantById(submission.userId) || {};
+        const pName = participant.name || ((participant.firstName || '') + ' ' + (participant.lastName || '')).trim() || "Անհայտ";
+
         this.addResult({
             competitionId: competitionId,
             participantId: submission.userId,
-            participantName: "Օգտատեր (Demo)", // Mock name
-            school: "Demo School",
+            participantName: pName,
+            school: participant.school || "Անհայտ",
             score: totalScore,
-            rank: 0, // Will be calculated dynamically usually
+            rank: 0,
             details: details
         });
 
         return submission;
     },
 
-
     // ==================== Օգտատեր ====================
-
-    /**
-     * Ստանալ ընթացիկ օգտատիրոջը
-     */
     getCurrentUser() {
-        const data = localStorage.getItem(this.STORAGE_KEYS.CURRENT_USER);
-        return data ? JSON.parse(data) : null;
+        return this.provider.getCurrentUser();
     },
 
-    /**
-     * Սահմանել ընթացիկ օգտատիրոջը (մուտք գործել)
-     */
     setCurrentUser(user) {
-        localStorage.setItem(this.STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+        this.provider.saveCurrentUser(user);
     },
 
-    /**
-     * Դուրս գալ
-     */
     logout() {
-        localStorage.removeItem(this.STORAGE_KEYS.CURRENT_USER);
+        this.provider.removeCurrentUser();
     }
 };
 
-// Սկզբնավորել API-ն
-API.init();
+// Initialize API with dependency injection
+const storageProvider = new LocalStorageProvider();
+API.init(storageProvider);

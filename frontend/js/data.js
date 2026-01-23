@@ -11,21 +11,115 @@ const MockData = {
         { name: 'Ինֆորմատիկա', icon: '💻' }
     ],
     schools: [
-        "Երևանի Ֆիզմաթ դպրոց",
-        "Երևանի Քվանտ վարժարան",
-        "Շիրակացու ճեմարան",
-        "Այբ դպրոց",
-        "Երևանի թիվ 29 դպրոց",
-        "Գյումրու Ֆոտոն վարժարան",
-        "Վանաձորի Էվրիկա դպրոց", 
-        "ՀԱՊՀ Ավագ դպրոց",
-        "ԵՊՀ Առընթեր դպրոց"
+        {
+            id: 1,
+            name: "Երևանի Ֆիզմաթ դպրոց",
+            city: "Երևան",
+            region: "Երևան",
+            phone: "+374 10 264585",
+            email: "physmath@example.com",
+            participantsCount: 45,
+            averageScore: 88.5
+        },
+        {
+            id: 2,
+            name: "Երևանի Քվանտ վարժարան",
+            city: "Երևան",
+            region: "Երևան",
+            phone: "+374 10 274433",
+            email: "quant@example.com",
+            participantsCount: 32,
+            averageScore: 85.2
+        },
+        {
+            id: 3,
+            name: "Շիրակացու ճեմարան",
+            city: "Երևան",
+            region: "Երևան",
+            phone: "+374 10 440263",
+            email: "shirakatsy@example.com",
+            participantsCount: 28,
+            averageScore: 84.0
+        },
+        {
+            id: 4,
+            name: "Այբ դպրոց",
+            city: "Երևան",
+            region: "Երևան",
+            phone: "+374 10 523631",
+            email: "ayb@example.com",
+            participantsCount: 30,
+            averageScore: 86.5
+        },
+        {
+            id: 5,
+            name: "Երևանի թիվ 29 դպրոց",
+            city: "Երևան",
+            region: "Երևան",
+            phone: "+374 10 292929",
+            email: "school29@example.com",
+            participantsCount: 15,
+            averageScore: 78.4
+        },
+        {
+            id: 6,
+            name: "Գյումրու Ֆոտոն վարժարան",
+            city: "Գյումրի",
+            region: "Շիրակ",
+            phone: "+374 312 34567",
+            email: "photon@example.com",
+            participantsCount: 20,
+            averageScore: 82.1
+        },
+        {
+            id: 7,
+            name: "Վանաձորի Էվրիկա դպրոց",
+            city: "Վանաձոր",
+            region: "Լոռի",
+            phone: "+374 322 12345",
+            email: "evrika@example.com",
+            participantsCount: 18,
+            averageScore: 80.5
+        },
+        {
+            id: 8,
+            name: "ՀԱՊՀ Ավագ դպրոց",
+            city: "Երևան",
+            region: "Երևան",
+            phone: "+374 10 555555",
+            email: "polytech@example.com",
+            participantsCount: 12,
+            averageScore: 79.8
+        },
+        {
+            id: 9,
+            name: "ԵՊՀ Առընթեր դպրոց",
+            city: "Երևան",
+            region: "Երևան",
+            phone: "+374 10 666666",
+            email: "ysu_school@example.com",
+            participantsCount: 25,
+            averageScore: 83.2
+        }
     ],
     grades: [
         { value: 9, label: "9-րդ դասարան" },
         { value: 10, label: "10-րդ դասարան" },
         { value: 11, label: "11-րդ դասարան" },
         { value: 12, label: "12-րդ դասարան" }
+    ],
+    regions: [
+        "Երևան",
+        "Շիրակ",
+        "Լոռի",
+        "Կոտայք",
+        "Արմավիր",
+        "Արարատ",
+        "Արագածոտն",
+        "Գեղարքունիք",
+        "Վայոց Ձոր",
+        "Սյունիք",
+        "Տավուշ"
     ],
     competitions: [
         {
@@ -209,7 +303,8 @@ const MockData = {
             lastName: 'Սարգսյան',
             school: 'Երևանի Ֆիզմաթ դպրոց',
             grade: 11,
-            email: 'armen.s@example.com'
+            email: 'armen.s@example.com',
+            registeredCompetitions: [1]
         },
         {
             id: 102,
@@ -217,7 +312,8 @@ const MockData = {
             lastName: 'Գրիգորյան',
             school: 'Քվանտ վարժարան',
             grade: 10,
-            email: 'ani.g@example.com'
+            email: 'ani.g@example.com',
+            registeredCompetitions: [1]
         },
         {
             id: 103,
@@ -225,7 +321,8 @@ const MockData = {
             lastName: 'Պետրոսյան',
             school: 'Այբ դպրոց',
             grade: 12,
-            email: 'davit.p@example.com'
+            email: 'davit.p@example.com',
+            registeredCompetitions: [1]
         },
         {
             id: 104,
@@ -233,7 +330,8 @@ const MockData = {
             lastName: 'Հովհաննիսյան',
             school: 'Շիրակացու ճեմարան',
             grade: 9,
-            email: 'mariam.h@example.com'
+            email: 'mariam.h@example.com',
+            registeredCompetitions: [1, 2]
         },
         {
             id: 105,
@@ -241,7 +339,8 @@ const MockData = {
             lastName: 'Ավագյան',
             school: 'Գյումրու Ֆոտոն վարժարան',
             grade: 11,
-            email: 'gor.a@example.com'
+            email: 'gor.a@example.com',
+            registeredCompetitions: [1]
         }
     ],
     submissions: [
