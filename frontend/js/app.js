@@ -356,7 +356,7 @@ const App = {
      */
     submitAnswerSheetScan() {
         const competitionId = parseInt(document.getElementById('as-comp-id').value);
-        const participantId = document.getElementById('as-participant-id').value;
+        const participantId = document.getElementById('as-participant-select').value;
         const fileInput = document.getElementById('file-input');
         
         if (!participantId) {

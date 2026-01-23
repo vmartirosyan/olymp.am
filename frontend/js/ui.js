@@ -609,12 +609,18 @@ const UI = {
     /**
      * Opens a printable answer sheet window using the saved template configuration
      */
-    printAnswerSheetTemplate(subject, competitionName) {
+    printAnswerSheetTemplate(subject, competitionName, participantId = null) {
         // Find the template for this subject
         const templateId = this.findTemplateForSubject(subject);
         const template = MockData.formTemplates[templateId] || MockData.formTemplates['default'];
         
-        console.log('Using template:', templateId, template);
+        // Fetch participant if ID provided
+        let participant = null;
+        if (participantId) {
+            participant = API.getParticipantById(participantId);
+        }
+
+        console.log('Using template:', templateId, template, 'Participant:', participant);
         
         // Get section configurations
         const mcqSection = template.sections.find(s => s.type === 'multiple_choice') || { questions: { start: 1, end: 15 }, options: 4 };
@@ -684,7 +690,6 @@ const UI = {
                     '.f-tr { top: 15mm; right: 10mm; }' +
                     '.f-bl { bottom: 15mm; left: 10mm; }' +
                     '.f-br { bottom: 15mm; right: 10mm; }' +
-                    '.f-ml { top: 48%; left: 10mm; }' +
                     '.header { text-align: center; margin-bottom: 20px; margin-top: 10px; }' +
                     '.header h2, .header h3 { margin: 5px 0; }' +
                     '.top-section { display: flex; justify-content: space-between; margin-bottom: 20px; }' +
@@ -701,7 +706,6 @@ const UI = {
                 '<div class="page-container">' +
                     '<div class="fiducial f-tl"></div>' +
                     '<div class="fiducial f-tr"></div>' +
-                    '<div class="fiducial f-ml"></div>' +
                     '<div class="fiducial f-bl"></div>' +
                     '<div class="fiducial f-br"></div>' +
                     '<div class="header">' +
@@ -711,11 +715,12 @@ const UI = {
                     '</div>' +
                     '<div class="top-section">' +
                         '<div class="personal-info" style="padding-top: 20px;">' +
-                            '<div class="info-row"><span class="info-label">Ազգանուն</span></div>' +
-                            '<div class="info-row"><span class="info-label">Անուն</span></div>' +
+                            '<div class="info-row"><span class="info-label">Ազգանուն</span>' + (participant ? (participant.lastName || '') : '') + '</div>' +
+                            '<div class="info-row"><span class="info-label">Անուն</span>' + (participant ? (participant.firstName || participant.name || '') : '') + '</div>' +
                             '<div class="info-row"><span class="info-label">Հայրանուն</span></div>' +
-                            '<div class="info-row"><span class="info-label">Մարզ</span></div>' +
-                            '<div class="info-row"><span class="info-label">Կրթօջախ</span></div>' +
+                            '<div class="info-row"><span class="info-label">Մարզ</span>' + (participant ? (participant.region || participant.city || '') : '') + '</div>' +
+                            '<div class="info-row"><span class="info-label">Կրթօջախ</span>' + (participant ? (participant.school || '') : '') + '</div>' +
+                            '<div class="info-row"><span class="info-label">Ստորագրություն</span></div>' +
                         '</div>' +
                         '<div class="personal-number">' +
                             '<div style="text-align: center; font-weight: bold;">ԱՆՁՆԱԿԱՆ ՀԱՄԱՐ</div>' +
@@ -733,14 +738,13 @@ const UI = {
                     '<div style="margin-bottom: 20px;">' +
                         '<div style="margin-bottom: 10px;">' +
                             '<strong>Դասարան:</strong> ' +
-                            [5,6,7,8,9,10,11,12].map(function(n) { return '<span class="square" style="width:20px; height:20px;"></span> ' + n; }).join('&nbsp;&nbsp;') +
+                            [5,6,7,8,9,10,11,12].map(function(n) { 
+                                const isChecked = participant && participant.grade == n;
+                                return '<span class="square" style="width:20px; height:20px;' + (isChecked ? 'background:black;' : '') + '"></span> ' + n; 
+                            }).join('&nbsp;&nbsp;') +
                         '</div>' +
-                        '<div style="display: flex; gap: 20px;">' +
-                            '<strong>Առարկա:</strong>' +
-                            '<div><span class="square"></span> ' + (subject || 'Մաթեմատիկա') + '</div>' +
-                            '<div><span class="square"></span> Ֆիզիկա</div>' +
-                            '<div><span class="square"></span> Քիմիա</div>' +
-                            '<div><span class="square"></span> Կենսաբանություն</div>' +
+                        '<div style="margin-top: 10px;">' +
+                            '<strong>Առարկա:</strong> ' + (subject || 'Մաթեմատիկա') +
                         '</div>' +
                     '</div>' +
                     '<hr style="border-top: 2px solid black; margin: 20px 0;">' +
@@ -839,12 +843,23 @@ const UI = {
                     ⚠️ Ուշադրություն. Խնդրում ենք վերբեռնել միայն սկանավորված պատասխանաթերթիկը (JPG կամ PNG ձևաչափով):
                 </div>
 
+                <div style="margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 4px; border: 1px solid #cce5ff;">
+                    <label for="as-participant-select" style="font-weight: bold; display: block; margin-bottom: 5px;">Ընտրեք մասնակցին (տվյալները լրացնելու համար):</label>
+                    <select id="as-participant-select" class="search-input" style="width: 100%; padding: 10px;">
+                        <option value="">-- Դատարկ ձևաթուղթ --</option>
+                        ${participants.map(p => {
+                            const name = p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Անհայտ';
+                            return `<option value="${p.id}">${name} (${p.grade}-րդ դասարան)</option>`;
+                        }).join('')}
+                    </select>
+                </div>
+
                 <div class="instructions">
                     <div class="instruction-step">
                         <div class="step-number">1</div>
                         <div>
                             <strong>Ներբեռնեք ձևաթուղթը</strong><br>
-                            <a href="#" onclick="UI.printAnswerSheetTemplate('${competition.subject}', '${competition.name}'); return false;" style="color: #2196F3; text-decoration: none;">⬇️ Ներբեռնել պատասխանաթերթիկի նմուշը</a>
+                            <a href="#" onclick="UI.printAnswerSheetTemplate('${competition.subject}', '${competition.name}', document.getElementById('as-participant-select').value); return false;" style="color: #2196F3; text-decoration: none;">⬇️ Ներբեռնել պատասխանաթերթիկի նմուշը</a>
                         </div>
                     </div>
                     <div class="instruction-step">
@@ -865,17 +880,6 @@ const UI = {
                 
                 <form id="scan-upload-form">
                     <input type="hidden" id="as-comp-id" value="${competitionId}">
-
-                    <div style="margin-bottom: 20px;">
-                        <label for="as-participant-id" style="font-weight: bold; display: block; margin-bottom: 5px;">Ընտրեք մասնակցին:</label>
-                        <select id="as-participant-id" class="search-input" style="width: 100%; padding: 10px;">
-                            <option value="">-- Ընտրեք --</option>
-                            ${participants.map(p => {
-                                const name = p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Անհայտ';
-                                return `<option value="${p.id}">${name} (${p.grade}-րդ դասարան)</option>`;
-                            }).join('')}
-                        </select>
-                    </div>
                     
                     <div class="upload-area" onclick="document.getElementById('file-input').click()">
                         <div class="upload-icon">📤</div>
