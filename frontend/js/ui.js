@@ -20,9 +20,8 @@ const UI = {
      */
     loadTemplatesFromStorage() {
         try {
-            const saved = localStorage.getItem('olymp_templates');
-            if (saved) {
-                const templates = JSON.parse(saved);
+            const templates = API.getTemplates();
+            if (templates) {
                 Object.assign(MockData.formTemplates, templates);
                 console.log('Loaded templates:', Object.keys(templates));
             }
@@ -42,7 +41,7 @@ const UI = {
                     toSave[key] = MockData.formTemplates[key];
                 }
             }
-            localStorage.setItem('olymp_templates', JSON.stringify(toSave));
+            API.saveTemplates(toSave);
             console.log('Templates saved to localStorage');
         } catch (e) {
             console.error('Failed to save templates to localStorage:', e);
@@ -690,8 +689,8 @@ const UI = {
                     '.header h2, .header h3 { margin: 5px 0; }' +
                     '.top-section { display: flex; justify-content: space-between; margin-bottom: 20px; }' +
                     '.personal-info { width: 55%; }' +
-                    '.info-row { margin-bottom: 15px; border-bottom: 1px solid black; height: 25px; position: relative; }' +
-                    '.info-label { font-weight: bold; position: absolute; top: -20px; left: 0; font-size: 12px; }' +
+                    '.info-row { margin-bottom: 15px; border-bottom: 1px solid black; padding-top: 25px; position: relative; }' +
+                    '.info-label { font-weight: bold; position: absolute; top: 5px; left: 0; font-size: 12px; }' +
                     '.personal-number { width: 40%; border: 2px solid black; padding: 10px; }' +
                     '.bubble-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; text-align: center; }' +
                     '.square { display: inline-block; width: 16px; height: 16px; border: 1px solid black; margin: 1px; text-align: center; line-height: 14px; font-size: 10px; vertical-align: middle; }' +

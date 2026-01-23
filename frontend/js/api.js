@@ -19,6 +19,7 @@ class LocalStorageProvider {
             SCHOOLS: 'olymp_schools',
             RESULTS: 'olymp_results',
             SUBMISSIONS: 'olymp_submissions',
+            TEMPLATES: 'olymp_templates',
             CURRENT_USER: 'olymp_current_user'
         };
     }
@@ -151,6 +152,15 @@ class LocalStorageProvider {
         localStorage.setItem(this.STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
     }
 
+    getTemplates() {
+        const data = localStorage.getItem(this.STORAGE_KEYS.TEMPLATES);
+        return data ? JSON.parse(data) : null;
+    }
+
+    saveTemplates(templates) {
+        localStorage.setItem(this.STORAGE_KEYS.TEMPLATES, JSON.stringify(templates));
+    }
+
     getCurrentUser() {
         const data = localStorage.getItem(this.STORAGE_KEYS.CURRENT_USER);
         return data ? JSON.parse(data) : null;
@@ -180,6 +190,14 @@ const API = {
 
     resetData() {
         this.provider.resetData();
+    },
+
+    getTemplates() {
+        return this.provider.getTemplates();
+    },
+    
+    saveTemplates(templates) {
+        this.provider.saveTemplates(templates);
     },
 
     // ==================== Մրցույթներ ====================

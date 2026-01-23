@@ -180,11 +180,9 @@ const App = {
         }
         
         // Թարմացնել մրցույթի մասնակիցների քանակը
-        const competitions = API.getCompetitions();
-        const compIndex = competitions.findIndex(c => c.id === competitionId);
-        if (compIndex !== -1) {
-            competitions[compIndex].participants++;
-            localStorage.setItem(API.STORAGE_KEYS.COMPETITIONS, JSON.stringify(competitions));
+        const competition = API.getCompetitionById(competitionId);
+        if (competition) {
+            API.updateCompetition(competitionId, { participants: competition.participants + 1 });
         }
         
         this.closeModal();
