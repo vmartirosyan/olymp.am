@@ -247,12 +247,22 @@ const UI = {
             'medium': 'Միջին',
             'hard': 'Բարդ'
         };
+
+        // Fallback for missing subject - lookup via competition or use default
+        let subject = problem.subject;
+        if (!subject && problem.competitionId) {
+            const competition = API.getCompetitionById(problem.competitionId);
+            if (competition) {
+                subject = competition.subject;
+            }
+        }
+        subject = subject || 'Անհայտ առարկա';
         
         return `
-            <div class="problem-item" data-difficulty="${problem.difficulty}" data-subject="${problem.subject}">
+            <div class="problem-item" data-difficulty="${problem.difficulty}" data-subject="${subject}">
                 <div class="problem-info">
                     <h3>${problem.title}</h3>
-                    <p>${problem.subject}</p>
+                    <p>${subject}</p>
                 </div>
                 <div class="problem-meta">
                     <span class="difficulty difficulty-${problem.difficulty}">${difficultyLabels[problem.difficulty]}</span>

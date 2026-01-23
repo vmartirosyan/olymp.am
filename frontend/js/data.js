@@ -292,6 +292,134 @@ const MockData = {
             correctAnswer: "25",
             points: 5,
             difficulty: "easy"
+        },
+        // Biology Problems (Competition 2)
+        {
+            id: 21,
+            competitionId: 2,
+            number: 1,
+            title: "Բջջի կառուցվածք",
+            description: "Ո՞ր օրգանոիդն է պատասխանատու էներգիայի արտադրության համար (բջջի էլեկտրակայան):",
+            type: "multiple_choice",
+            options: ["Ռիբոսոմ", "Միտոքոնդրիում", "Լիզոսոմ", "Գոլջիի ապարատ", "Կորիզ"],
+            correctAnswer: "2",
+            points: 5,
+            difficulty: "easy",
+            subject: "Կենսաբանություն"
+        },
+        {
+            id: 22,
+            competitionId: 2,
+            number: 2,
+            title: "ԴՆԹ",
+            description: "Ո՞ր ազոտային հիմքն է կոմպլեմենտար Ադենինին (A) ԴՆԹ-ում:",
+            type: "multiple_choice",
+            options: ["Ուրացիլ", "Ցիտոզին", "Գուանին", "Թիմին", "Ադենին"],
+            correctAnswer: "4",
+            points: 5,
+            difficulty: "medium",
+            subject: "Կենսաբանություն"
+        },
+        {
+            id: 23,
+            competitionId: 2,
+            number: 3,
+            title: "Մարդու անատոմիա",
+            description: "Քանի՞ խոռոչ ունի մարդու սիրտը:",
+            type: "short_answer",
+            correctAnswer: "4",
+            points: 5,
+            difficulty: "easy",
+            subject: "Կենսաբանություն"
+        },
+        {
+            id: 24,
+            competitionId: 2,
+            number: 4,
+            title: "Ֆոտոսինթեզ",
+            description: "Ի՞նչ է առաջանում ֆոտոսինթեզի լուսային փուլում:",
+            type: "multiple_choice",
+            options: ["Գլյուկոզ", "O2 և ATP", "CO2", "Ջուր", "Օսլա"],
+            correctAnswer: "2",
+            points: 10,
+            difficulty: "hard",
+            subject: "Կենսաբանություն"
+        },
+        {
+            id: 25,
+            competitionId: 2,
+            number: 5,
+            title: "Էկոլոգիա",
+            description: "Ո՞րն է բնապահպանական ամենամեծ խնդիրը, որը կապված է ջերմոցային էֆեկտի հետ:",
+            type: "multiple_choice",
+            options: ["Օզոնային անցքեր", "Գլոբալ տաքացում", "Թթվային անձրևներ", "Անտառահատումներ", "Ջրի աղտոտում"],
+            correctAnswer: "2",
+            points: 5,
+            difficulty: "medium",
+            subject: "Կենսաբանություն"
+        },
+        // Physics Problems (Competition 3)
+        {
+            id: 26,
+            competitionId: 3,
+            number: 1,
+            title: "Ուժի միավոր",
+            description: "Ո՞րն է ուժի չափման միավորը ՄՀ համակարգում:",
+            type: "multiple_choice",
+            options: ["Ջոուլ", "Վատտ", "Նյուտոն", "Պասկալ", "Կելվին"],
+            correctAnswer: "3",
+            points: 5,
+            difficulty: "easy",
+            subject: "Ֆիզիկա"
+        },
+        {
+            id: 27,
+            competitionId: 3,
+            number: 2,
+            title: "Լույսի արագություն",
+            description: "Մոտավորապես ինչքա՞ն է լույսի արագությունը վակուումում (կմ/վ):",
+            type: "short_answer",
+            correctAnswer: "300000",
+            points: 5,
+            difficulty: "medium",
+            subject: "Ֆիզիկա"
+        },
+        {
+            id: 28,
+            competitionId: 3,
+            number: 3,
+            title: "Նյուտոնի օրենքներ",
+            description: "$F=ma$ բանաձևը արտահայտում է Նյուտոնի որե՞րորդ օրենքը:",
+            type: "short_answer",
+            correctAnswer: "2",
+            points: 5,
+            difficulty: "easy",
+            subject: "Ֆիզիկա"
+        },
+        {
+            id: 29,
+            competitionId: 3,
+            number: 4,
+            title: "Էլեկտրականություն",
+            description: "Օհմի օրենքը շղթայի տեղամասի համար:",
+            type: "multiple_choice",
+            options: ["I=U/R", "I=UR", "I=R/U", "U=I/R", "R=IU"],
+            correctAnswer: "1",
+            points: 5,
+            difficulty: "medium",
+            subject: "Ֆիզիկա"
+        },
+        {
+            id: 30,
+            competitionId: 3,
+            number: 5,
+            title: "Մեխանիկա - Ազատ անկում",
+            description: "Եթե մարմինը ազատ ընկնում է, ի՞նչ արագություն կունենա 1 վայրկյան անց ($g \\approx 10$ մ/վ$^2$):",
+            type: "short_answer",
+            correctAnswer: "10",
+            points: 5,
+            difficulty: "medium",
+            subject: "Ֆիզիկա"
         }
     ],
     results: [],
@@ -303,6 +431,7 @@ const MockData = {
             lastName: 'Սարգսյան',
             school: 'Երևանի Ֆիզմաթ դպրոց',
             grade: 11,
+            city: 'Երևան',
             email: 'armen.s@example.com',
             registeredCompetitions: [1]
         },
@@ -312,6 +441,7 @@ const MockData = {
             lastName: 'Գրիգորյան',
             school: 'Քվանտ վարժարան',
             grade: 10,
+            city: 'Երևան',
             email: 'ani.g@example.com',
             registeredCompetitions: [1]
         },
@@ -321,6 +451,7 @@ const MockData = {
             lastName: 'Պետրոսյան',
             school: 'Այբ դպրոց',
             grade: 12,
+            city: 'Երևան',
             email: 'davit.p@example.com',
             registeredCompetitions: [1]
         },
@@ -330,6 +461,7 @@ const MockData = {
             lastName: 'Հովհաննիսյան',
             school: 'Շիրակացու ճեմարան',
             grade: 9,
+            city: 'Երևան',
             email: 'mariam.h@example.com',
             registeredCompetitions: [1, 2]
         },
@@ -339,6 +471,7 @@ const MockData = {
             lastName: 'Ավագյան',
             school: 'Գյումրու Ֆոտոն վարժարան',
             grade: 11,
+            city: 'Գյումրի',
             email: 'gor.a@example.com',
             registeredCompetitions: [1]
         }

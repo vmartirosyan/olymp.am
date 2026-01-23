@@ -29,9 +29,38 @@ class LocalStorageProvider {
         }
         if (!localStorage.getItem(this.STORAGE_KEYS.PROBLEMS)) {
             localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(MockData.problems));
+        } else {
+            // MERGE: Ensure new mock problems are added to localStorage
+            let storedProblems = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PROBLEMS));
+            let hasChanges = false;
+            MockData.problems.forEach(mockProblem => {
+                if (!storedProblems.find(p => p.id === mockProblem.id)) {
+                    storedProblems.push(mockProblem);
+                    hasChanges = true;
+                }
+            });
+            if (hasChanges) {
+                localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(storedProblems));
+            }
         }
         if (!localStorage.getItem(this.STORAGE_KEYS.PARTICIPANTS)) {
             localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(MockData.participants));
+        } else {
+            // MERGE: Update participants with missing city data
+            let storedParticipants = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PARTICIPANTS));
+            let hasChanges = false;
+            storedParticipants.forEach(p => {
+                if (!p.city) {
+                    const mockP = MockData.participants.find(mp => mp.id === p.id);
+                    if (mockP && mockP.city) {
+                        p.city = mockP.city;
+                        hasChanges = true;
+                    }
+                }
+            });
+            if (hasChanges) {
+                localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(storedParticipants));
+            }
         }
         if (!localStorage.getItem(this.STORAGE_KEYS.SCHOOLS)) {
             localStorage.setItem(this.STORAGE_KEYS.SCHOOLS, JSON.stringify(MockData.schools));
@@ -303,7 +332,20 @@ const API = {
     },
 
     getResultsByParticipant(participantId) {
-        return this.getResults().filter(r => r.participantId === parseInt(participantId));
+        // We need to calculate rank dynamically by looking at the leaderboard for each competition
+        const participantResults = this.getResults().filter(r => r.participantId === parseInt(participantId));
+        
+        return participantResults.map(result => {
+            // Get leaderboard for this competition to find the rank
+            // This is slightly inefficient but ensures consistent ranking logic
+            const leaderboard = this.getLeaderboard(result.competitionId);
+            const leaderboardEntry = leaderboard.find(entry => entry.participantId === parseInt(participantId));
+            
+            return {
+                ...result,
+                rank: leaderboardEntry ? leaderboardEntry.rank : (result.rank || '-')
+            };
+        });
     },
 
     addResult(result) {
