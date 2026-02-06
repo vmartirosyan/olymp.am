@@ -1449,83 +1449,114 @@ const UI = {
         return stats;
     },
     /**
+     * Handle competition selection in editor
+     */
+    onCompetitionSelect(compId) {
+        this.editorState.competitionId = parseInt(compId);
+        if (!compId) return;
+        
+        const comp = window.API.getCompetitionById(this.editorState.competitionId);
+        if (!comp) return;
+
+        // Auto-configure based on problems
+        const problems = window.API.getProblemsByCompetition(comp.id);
+        const mcq = problems.filter(p => p.type === 'multiple_choice').length;
+        const short = problems.filter(p => p.type === 'short_answer').length;
+        
+        // Only update if we found problems, otherwise keep defaults or previous
+        if (problems.length > 0) {
+            this.editorState.mcqCount = mcq;
+            this.editorState.shortAnswerCount = short;
+            this.editorState.shortAnswerStart = mcq + 1;
+        }
+        
+        // Update template name automatically
+        this.editorState.templateName = `${comp.name}`;
+        
+        // Re-render to show updated values in inputs
+        const contentDiv = document.getElementById('app-content');
+        if (contentDiv) contentDiv.innerHTML = this.renderAnswerSheetEditor();
+    },
+
+    /**
      * Answer Sheet Editor - configure templates per subject
      */
     renderAnswerSheetEditor() {
-        const subjects = API.getSubjects();
-        const templates = Object.keys(API.getFormTemplates());
+        const subjects = window.API.getSubjects();
         
         // Initialize subject if not set
         if (!this.editorState.subject) {
             this.editorState.subject = subjects[0].name;
-        }
-        
-        // Auto-load existing template for the current subject
-        const existingTemplateId = this.findTemplateForSubject(this.editorState.subject);
-        if (existingTemplateId !== 'default' && this.editorState.templateId === 'default') {
-            this.loadTemplateForEditing(existingTemplateId);
+            // Try to set default competition
+            const comps = window.API.getCompetitions().filter(c => c.subject === subjects[0].name);
+            if(comps.length > 0) this.editorState.competitionId = comps[0].id;
         }
         
         const state = this.editorState;
         
-        // Get problem statistics for the current subject
-        const problemStats = this.getProblemStatsForSubject(state.subject);
-        const templateTotal = state.mcqCount + state.shortAnswerCount;
-        const hasMatch = problemStats.hasCompetitions && 
-            problemStats.suggestedMcq === state.mcqCount && 
-            problemStats.suggestedShort === state.shortAnswerCount;
-        
-        // Build the problem stats info box
-        let problemStatsHtml = '';
-        if (problemStats.hasCompetitions) {
-            const matchStatus = hasMatch 
-                ? '<span style="color: #28a745;">✓ Match</span>'
-                : '<span style="color: #dc3545;">⚠ Mismatch</span>';
-            
-            problemStatsHtml = `
-                <div style="background: ${hasMatch ? '#e8f5e9' : '#fff3e0'}; border: 1px solid ${hasMatch ? '#4caf50' : '#ff9800'}; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
-                    <div style="font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between;">
-                        <span>📊 Database Problems</span>
-                        ${matchStatus}
+        // Filter competitions for dropdown
+        const subjectCompetitions = window.API.getCompetitions().filter(c => 
+            c.subject === state.subject || c.subject === subjects.find(s=>s.name===state.subject)?.id
+        );
+
+        // Get stats for selected competition (if any)
+        let statsInfo = '';
+        if (state.competitionId) {
+            const comp = window.API.getCompetitionById(state.competitionId);
+            if (comp) {
+                const problems = window.API.getProblemsByCompetition(comp.id);
+                const mcq = problems.filter(p => p.type === 'multiple_choice').length;
+                const short = problems.filter(p => p.type === 'short_answer').length;
+                
+                const isMatch = state.mcqCount === mcq && state.shortAnswerCount === short;
+                
+                statsInfo = `
+                    <div style="background: ${isMatch ? '#e8f5e9' : '#fff3e0'}; border: 1px solid ${isMatch ? '#4caf50' : '#ff9800'}; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                        <div style="font-weight: bold; margin-bottom: 8px;">📊 ${comp.name}</div>
+                        <div style="font-size: 13px; margin-bottom: 8px;">
+                            Շտեմարան՝ <strong>${mcq}</strong> ԲԸՀ + <strong>${short}</strong> Կարճ<br>
+                            Ընթացիկ՝ <strong>${state.mcqCount}</strong> ԲԸՀ + <strong>${state.shortAnswerCount}</strong> Կարճ
+                        </div>
+                        ${!isMatch ? `<div style="color: #c85a17; font-size: 12px;"> Տվյալները տարբերվում են շտեմարանից </div>` : ''}
                     </div>
-                    <div style="font-size: 13px;">
-                        ${problemStats.competitions.slice(0, 2).map(c => `
-                            <div style="margin-bottom: 4px; padding: 4px; background: white; border-radius: 4px;">
-                                <strong>${c.name}</strong><br>
-                                <span style="color: #555;">MCQ: ${c.mcqCount} | Short: ${c.shortCount} | Total: ${c.totalProblems}</span>
-                            </div>
-                        `).join('')}
-                        ${problemStats.competitions.length > 2 ? '<div style="color: #666; font-style: italic;">+' + (problemStats.competitions.length - 2) + ' more...</div>' : ''}
-                    </div>
-                    ${!hasMatch ? `
-                        <button class="btn btn-sm" style="margin-top: 8px; width: 100%; background: #ff9800; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer;" 
-                                onclick="UI.applyProblemSuggestions()">
-                            🔄 Apply Suggested (${problemStats.suggestedMcq} + ${problemStats.suggestedShort})
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-        } else {
-            problemStatsHtml = `
-                <div style="background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
-                    <div style="color: #666; font-size: 13px;">
-                        ℹ️ No competitions found for "${state.subject}".
-                    </div>
-                </div>
-            `;
+                `;
+            }
         }
+        
+        const templateTotal = state.mcqCount + state.shortAnswerCount;
         
         return `
             <div class="page-header">
-                <h1>📝 Answer Sheet Editor</h1>
-                <p>Create and configure answer sheet templates for different subjects and competitions</p>
+                <h1>📝 Պատասխանաթերթիկի Խմբագրիչ</h1>
+                <p>Ստեղծել և խմբագրել պատասխանաթերթիկների ձևանմուշներ տարբեր առարկաների և մրցույթների համար</p>
             </div>
 
             <div class="editor-container" style="display: grid; grid-template-columns: 380px 1fr; gap: 20px;">
                 <!-- Sidebar Controls -->
                 <div class="editor-sidebar card" style="padding: 20px;">
-                    <h3>📋 Template Settings</h3>
+                    <h3>📋 Ձևանմուշի Կարգավորումներ</h3>
                     
+                    <!-- Subject -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-weight: bold;">Առարկա</label>
+                        <select class="form-control" id="editor-subject" onchange="UI.onSubjectChange(this.value)">
+                            ${subjects.map(s => `<option value="${s.name}" ${state.subject === s.name ? 'selected' : ''}>${s.icon} ${s.name}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <!-- Competition Select -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-weight: bold;">Մրցույթ (Դասարան)</label>
+                        <select class="form-control" id="editor-competition" onchange="UI.onCompetitionSelect(this.value)">
+                            <option value="">-- Ձեռքով Կարգավորում --</option>
+                            ${subjectCompetitions.map(c => {
+                                // Add grades info to name
+                                const grades = c.grades ? ` (${c.grades.join(',')} դաս.)` : '';
+                                return `<option value="${c.id}" ${state.competitionId == c.id ? 'selected' : ''}>${c.name}${grades}</option>`;
+                            }).join('')}
+                        </select>
+                    </div>
+
                     <!-- Template Summary Box -->
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
                         <div style="font-size: 32px; font-weight: bold;">${templateTotal}</div>
@@ -1533,25 +1564,24 @@ const UI = {
                         <div style="display: flex; justify-content: space-around; margin-top: 10px; font-size: 13px;">
                             <div>
                                 <div style="font-size: 18px; font-weight: bold;">${state.mcqCount}</div>
-                                <div style="opacity: 0.8;">MCQ (1-${state.mcqCount})</div>
+                                <div style="opacity: 0.8;">ԲԸՀ (1-${state.mcqCount})</div>
                             </div>
                             <div style="border-left: 1px solid rgba(255,255,255,0.3);"></div>
                             <div>
                                 <div style="font-size: 18px; font-weight: bold;">${state.shortAnswerCount}</div>
-                                <div style="opacity: 0.8;">Short (${state.shortAnswerStart}-${state.shortAnswerStart + state.shortAnswerCount - 1})</div>
+                                <div style="opacity: 0.8;">Կարճ (${state.shortAnswerStart}-${state.shortAnswerStart + state.shortAnswerCount - 1})</div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Problem Stats Info -->
-                    ${problemStatsHtml}
+                    ${statsInfo}
                     
                     <!-- Existing Templates -->
                     <div style="margin-bottom: 15px;">
-                        <label style="font-weight: bold;">Load Existing Template</label>
+                        <label style="font-weight: bold;">Բեռնել Առկա Ձևանմուշ</label>
                         <select class="form-control" id="editor-template-select" onchange="UI.onTemplateSelect(this.value)">
-                            <option value="">-- New Template --</option>
-                            ${templates.map(t => `<option value="${t}" ${state.templateId === t ? 'selected' : ''}>${MockData.formTemplates[t].name}</option>`).join('')}
+                            <option value="">-- Նոր Ձևանմուշ --</option>
+                            ${Object.keys(window.API.getFormTemplates()).map(t => `<option value="${t}" ${state.templateId === t ? 'selected' : ''}>${window.API.getFormTemplates()[t].name}</option>`).join('')}
                         </select>
                     </div>
                     
@@ -1559,18 +1589,10 @@ const UI = {
                     
                     <!-- Template Name -->
                     <div style="margin-bottom: 15px;">
-                        <label style="font-weight: bold;">Template Name</label>
+                        <label style="font-weight: bold;">Ձևանմուշի Անվանում</label>
                         <input type="text" class="form-control" id="editor-template-name" 
                                value="${state.templateName}" 
                                onchange="UI.editorState.templateName = this.value; UI.refreshEditorPreview();">
-                    </div>
-                    
-                    <!-- Subject -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="font-weight: bold;">Subject</label>
-                        <select class="form-control" id="editor-subject" onchange="UI.onSubjectChange(this.value)">
-                            ${subjects.map(s => `<option value="${s.name}" ${state.subject === s.name ? 'selected' : ''}>${s.icon} ${s.name}</option>`).join('')}
-                        </select>
                     </div>
                     
                     <hr>
@@ -1578,9 +1600,9 @@ const UI = {
                     
                     <!-- MCQ Count -->
                     <div style="margin-bottom: 15px;">
-                        <label>MCQ Count (1 to N)</label>
+                        <label>ԲԸ Հարցերի Քանակ (1-ից N)</label>
                         <input type="number" class="form-control" id="editor-mcq-count" 
-                               min="1" max="50" value="${state.mcqCount}"
+                               min="0" max="50" value="${state.mcqCount}"
                                onchange="UI.editorState.mcqCount = parseInt(this.value); UI.editorState.shortAnswerStart = parseInt(this.value) + 1; UI.refreshEditorPreview();">
                     </div>
                     
@@ -1588,9 +1610,9 @@ const UI = {
                     <div style="margin-bottom: 15px;">
                         <label>Տարբերակներ մեկ հարցի համար</label>
                         <select class="form-control" id="editor-mcq-options" onchange="UI.editorState.mcqOptions = parseInt(this.value); UI.refreshEditorPreview();">
-                            <option value="3" ${state.mcqOptions === 3 ? 'selected' : ''}>3 options (A, B, C)</option>
-                            <option value="4" ${state.mcqOptions === 4 ? 'selected' : ''}>4 options (1, 2, 3, 4)</option>
-                            <option value="5" ${state.mcqOptions === 5 ? 'selected' : ''}>5 options (A, B, C, D, E)</option>
+                            <option value="3" ${state.mcqOptions === 3 ? 'selected' : ''}>3 տարբերակ (A, B, C)</option>
+                            <option value="4" ${state.mcqOptions === 4 ? 'selected' : ''}>4 տարբերակ  (1, 2, 3, 4)</option>
+                            <option value="5" ${state.mcqOptions === 5 ? 'selected' : ''}>5 տարբերակ  (A, B, C, D, E)</option>
                         </select>
                     </div>
                     
@@ -1607,7 +1629,7 @@ const UI = {
                     
                     <!-- Max Digits -->
                     <div style="margin-bottom: 15px;">
-                        <label>Max Digits</label>
+                        <label>Առավելագույն Նիշեր</label>
                         <input type="number" class="form-control" id="editor-max-digits" 
                                min="1" max="10" value="${state.maxDigits}"
                                onchange="UI.editorState.maxDigits = parseInt(this.value); UI.refreshEditorPreview();">
@@ -1617,19 +1639,19 @@ const UI = {
                     
                     <!-- Action Buttons -->
                     <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="UI.saveEditorTemplate()">
-                        💾 Պահպանել ձևանմուշը
+                        💾 Պահպանել Ձևանմուշը
                     </button>
                     <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="UI.printAnswerSheetTemplate(UI.editorState.subject, UI.editorState.templateName)">
-                        🖨️ Print Preview
+                        🖨️ Տպելու Նախադիտում
                     </button>
                     <button class="btn btn-secondary" style="width: 100%;" onclick="UI.exportTemplateJSON()">
-                        📤 Export JSON
+                        📤 Արտահանել JSON
                     </button>
                 </div>
 
                 <!-- Live Preview Area -->
                 <div class="card" style="padding: 20px;">
-                    <h3>👁️ Live Preview</h3>
+                    <h3>👁️ Նախադիտում</h3>
                     <div id="editor-preview-area">
                         ${this.renderEditorPreview()}
                     </div>
@@ -1770,20 +1792,29 @@ const UI = {
     },
     
     /**
-     * Handle subject change - load existing template if available
+     * Handle subject change - load competitions and regenerate form
      */
     onSubjectChange(subject) {
         this.editorState.subject = subject;
+        this.editorState.competitionId = null; // Clear previous competition
         
-        // Check if there's an existing template for this subject
-        const existingTemplateId = this.findTemplateForSubject(subject);
-        if (existingTemplateId !== 'default') {
-            // Load the existing template
-            this.loadTemplateForEditing(existingTemplateId);
-            document.getElementById('content').innerHTML = this.renderAnswerSheetEditor();
+        // Find competitions for this subject
+        const subjects = window.API.getSubjects();
+        const subjectObj = subjects.find(s => s.name === subject);
+        const subjectId = subjectObj ? subjectObj.id : subject;
+        
+        const competitions = window.API.getCompetitions().filter(c => 
+            c.subject === subject || c.subject === subjectId
+        );
+
+        if (competitions.length > 0) {
+            // Automatically select the first competition
+            // This will trigger problem loading and re-render the editor
+            this.onCompetitionSelect(competitions[0].id);
         } else {
-            // Just refresh preview
-            this.refreshEditorPreview();
+            // If no competitions found, just re-render to update the view
+            const contentDiv = document.getElementById('app-content');
+            if (contentDiv) contentDiv.innerHTML = this.renderAnswerSheetEditor();
         }
     },
     
