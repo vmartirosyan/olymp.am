@@ -352,7 +352,7 @@ const App = {
     },
 
     /**
-     * Հանձնել պատասխանաթերթիկը (Scan)
+     * Հանձնել պատասխանաթերթիկը (Scan) - Process and Verify
      */
     submitAnswerSheetScan() {
         const competitionId = parseInt(document.getElementById('as-comp-id').value);
@@ -372,39 +372,125 @@ const App = {
         const file = fileInput.files[0];
         const reader = new FileReader();
 
-        reader.onload = function(e) {
+        // Show processing state with spinner
+        const modal = document.getElementById('modal-container');
+        const modalContent = document.getElementById('modal-content');
+        modalContent.innerHTML = `
+            <div class="modal-header">
+                <h2>Սկանավորում...</h2>
+            </div>
+            <div class="modal-body" style="text-align: center; padding: 40px;">
+                <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                <p id="scan-status" style="margin-top: 20px; font-size: 1.1em; color: #666;">Միացնում ենք OCR համակարգը...</p>
+            </div>
+            <style>@keyframes spin {0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }}</style>
+        `;
+        modal.classList.remove('hidden');
+
+        reader.onload = async function(e) {
             const imageData = e.target.result;
             
-            const submission = {
-                competitionId,
-                userId: parseInt(participantId),
-                filename: file.name,
-                timestamp: new Date().toISOString(),
-                status: 'pending_review',
-                imageData: imageData // Store the actual image
-            };
-
             try {
-                API.uploadAnswerSheet(submission);
+                // Get problems for context
+                const problems = API.getProblemsByCompetition(competitionId);
                 
-                // Clear the input
-                fileInput.value = '';
-                App.closeModal();
-                UI.showSuccess('Պատասխանաթերթիկը հաջողությամբ վերբեռնվեց:');
+                // Real OCR/OMR Processing
+                // Using Tesseract.js via UI.processSubmissionImage
+                const result = await UI.processSubmissionImage(imageData, problems);
+                const rawAnswers = result.extractedData;
+                const debugInfo = result.debugInfo; // Get debug info for visualization
                 
-                // Mock notification
-                console.log("Admin notification: New answer sheet uploaded for " + competitionId);
+                // Map Question Numbers (from Sheet) to Problem IDs (from Database)
+                console.log('[Scan] Raw OCR answers (by question number):', rawAnswers);
+                console.log('[Scan] Problems for mapping:', problems.map(p => ({id: p.id, number: p.number})));
+                console.log('[Scan] Debug info:', debugInfo);
+                
+                const detectedAnswers = {};
+                const invalidAnswers = {}; // Track invalid (multiple selection) answers
+                
+                problems.forEach(p => {
+                    const qNum = p.number; // e.g. 1, 2... matches sheet numbers
+                    if (rawAnswers[qNum] !== undefined) {
+                        if (rawAnswers[qNum] === 'INVALID') {
+                            invalidAnswers[p.id] = true;
+                            detectedAnswers[p.id] = 'INVALID';
+                        } else {
+                            detectedAnswers[p.id] = String(rawAnswers[qNum]);
+                        }
+                    }
+                });
+                
+                console.log('[Scan] Mapped answers (by problem ID):', detectedAnswers);
+                console.log('[Scan] Invalid answers:', invalidAnswers);
+                
+                // Store imageData and debugInfo temporarily for the next step
+                App.tempImageData = imageData;
+                App.tempDebugInfo = debugInfo;
+                
+                // Open verification modal with invalid answer info
+                modalContent.innerHTML = UI.renderScanVerificationModal(competitionId, parseInt(participantId), imageData, detectedAnswers, invalidAnswers);
+                
+                // Draw debug overlay after modal is rendered
+                setTimeout(() => {
+                    UI.drawDebugOverlay(debugInfo);
+                }, 100);
             } catch (err) {
-                console.error(err);
-                if (err.name === 'QuotaExceededError') {
-                    UI.showError('Նկարի չափը շատ մեծ է Demo տարբերակի համար: Խնդրում ենք ընտրել ավելի փոքր նկար:');
-                } else {
-                    UI.showError('Տեղի ունեցավ սխալ:');
-                }
+                console.error("Scan Error:", err);
+                modal.classList.add('hidden');
+                UI.showError("Error processing image: " + err.message);
             }
         };
 
         reader.readAsDataURL(file);
+    },
+    /**
+     */
+    confirmScanSubmission(competitionId, participantId) {
+        console.log('[Submit] Starting submission for competition:', competitionId, 'participant:', participantId);
+        
+        const problems = API.getProblemsByCompetition(competitionId);
+        const finalAnswers = {};
+        
+        // Collect edited answers
+        problems.forEach(p => {
+            const el = document.getElementById(`verify-answer-${p.id}`);
+            if (el) {
+                const val = el.value;
+                if (val) finalAnswers[p.id] = val;
+            } else {
+                console.warn(`[Submit] Input not found for problem ID: ${p.id}`);
+            }
+        });
+
+        console.log('[Submit] Final answers collected:', finalAnswers);
+
+        const submission = {
+            competitionId,
+            userId: parseInt(participantId),
+            filename: 'scanned_upload.png', // valid placeholder
+            timestamp: new Date().toISOString(),
+            status: 'pending_review', // Will be set to 'graded' after gradeSubmission
+            imageData: App.tempImageData,
+            answers: finalAnswers
+        };
+
+        try {
+            // Just save the submission - grading happens later from grading page
+            const savedSubmission = API.uploadAnswerSheet(submission);
+            console.log("[Submit] Submission saved with ID:", savedSubmission.id);
+            
+            this.closeModal();
+            UI.showSuccess("Submission saved successfully!");
+            
+            // Clean up
+            App.tempImageData = null;
+            
+            // Navigate to grading page to see pending submissions
+            this.navigateTo("grading");
+        } catch (err) {
+            console.error("[Submit] Error:", err);
+            UI.showError("Error: " + err.message);
+        }
     },
 
     /**
@@ -429,9 +515,9 @@ const App = {
         const result = API.gradeSubmission(submissionId, answers);
         
         this.closeModal();
-        UI.showSuccess(`Գնահատումն ավարտված է: Միավոր՝ ${result.score}`);
+        UI.showSuccess(`Grading complete! Score: ${result.score}`);
         
-        this.navigateTo('grading');
+        this.navigateTo('results');
     },
 
     /**
@@ -811,6 +897,9 @@ const App = {
         this.navigateTo('competitions');
     }
 };
+
+// Global export for browser environment
+window.App = App;
 
 // Initialize App when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

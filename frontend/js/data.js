@@ -1,15 +1,119 @@
 /**
- * Mock Data for Olympiad Demo Application
+ * Data Store for Olympiad Application
  */
 
+class DataStore {
+    constructor() {
+        this.data = {
+            subjects: [
+                { name: 'Մաթեմատիկա', icon: '📐' },
+                { name: 'Ֆիզիկա', icon: '🔬' },
+                { name: 'Քիմիա', icon: '⚗️' },
+                { name: 'Կենսաբանություն', icon: '🧬' },
+                { name: 'Ինֆորմատիկա', icon: '💻' }
+            ],
+            grades: [
+                { value: 8, label: '8-րդ դասարան' },
+                { value: 9, label: '9-րդ դասարան' },
+                { value: 10, label: '10-րդ դասարան' },
+                { value: 11, label: '11-րդ դասարան' },
+                { value: 12, label: '12-րդ դասարան' }
+            ],
+            regions: [
+                'Երևան',
+                'Շիրակ',
+                'Լոռի',
+                'Գյումրի',
+                'Վանաձոր'
+            ],
+            translations: {
+                // Armenian translations
+                'home': 'Գլխավոր',
+                'competitions': 'Մրցույթներ',
+                'problems': 'Խնդիրներ',
+                'participants': 'Մասնակիցներ',
+                'results': 'Արդյունքներ',
+                'schools': 'Դպրոցներ',
+                'about': 'Մեր մասին',
+                'editor': 'Խմբագրիչ',
+                'grading': 'Գնահատում'
+            },
+            formTemplates: {
+                'default': {
+                    name: 'Standard Olympiad',
+                    subject: 'math',
+                    pageSize: 'A4',
+                    sections: [
+                        {
+                            type: 'header',
+                            region: { x: 0.05, y: 0.02, width: 0.9, height: 0.08 }
+                        },
+                        {
+                            type: 'participant_info',
+                            region: { x: 0.05, y: 0.10, width: 0.9, height: 0.12 }
+                        },
+                        {
+                            type: 'multiple_choice',
+                            region: { x: 0.165, y: 0.585, width: 0.25, height: 0.30 },
+                            questions: { start: 1, end: 10 },
+                            options: 4,
+                            grid: { rows: 10, columns: 4, cellPadding: 0.15 }
+                        },
+                        {
+                            type: 'open_answer',
+                            region: { x: 0.57, y: 0.545, width: 0.30, height: 0.275 },
+                            questions: { start: 11, end: 15 }
+                        }
+                    ],
+                    optionLabels: ['A', 'B', 'C', 'D', 'E']
+                }
+            }
+        };
+    }
+
+    // Getters for static data
+    getSubjects() {
+        return this.data.subjects;
+    }
+
+    getGrades() {
+        return this.data.grades;
+    }
+
+    getRegions() {
+        return this.data.regions;
+    }
+
+    getTranslations() {
+        return this.data.translations;
+    }
+
+    // Form templates management
+    getFormTemplates() {
+        return this.data.formTemplates;
+    }
+
+    setFormTemplate(key, template) {
+        this.data.formTemplates[key] = template;
+    }
+
+    getFormTemplate(key) {
+        return this.data.formTemplates[key];
+    }
+}
+
+// Create singleton instance
+const dataStore = new DataStore();
+
+// Legacy MockData for backward compatibility (will be removed)
 const MockData = {
-    subjects: [
-        { name: 'Մաթեմատիկա', icon: '📐' },
-        { name: 'Ֆիզիկա', icon: '🔬' },
-        { name: 'Քիմիա', icon: '⚗️' },
-        { name: 'Կենսաբանություն', icon: '🧬' },
-        { name: 'Ինֆորմատիկա', icon: '💻' }
-    ],
+    subjects: dataStore.getSubjects(),
+    grades: dataStore.getGrades(),
+    regions: dataStore.getRegions(),
+    translations: dataStore.getTranslations(),
+    formTemplates: dataStore.getFormTemplates(),
+
+    // Legacy data for initialization
     schools: [
         {
             id: 1,
@@ -98,473 +202,306 @@ const MockData = {
             region: "Երևան",
             phone: "+374 10 666666",
             email: "ysu_school@example.com",
-            participantsCount: 25,
-            averageScore: 83.2
         }
-    ],
-    grades: [
-        { value: 9, label: "9-րդ դասարան" },
-        { value: 10, label: "10-րդ դասարան" },
-        { value: 11, label: "11-րդ դասարան" },
-        { value: 12, label: "12-րդ դասարան" }
-    ],
-    regions: [
-        "Երևան",
-        "Շիրակ",
-        "Լոռի",
-        "Կոտայք",
-        "Արմավիր",
-        "Արարատ",
-        "Արագածոտն",
-        "Գեղարքունիք",
-        "Վայոց Ձոր",
-        "Սյունիք",
-        "Տավուշ"
     ],
     competitions: [
         {
             id: 1,
-            name: 'Հանրապետական Օլիմպիադա 2026',
-            subject: 'Մաթեմատիկա',
-            description: 'Դպրոցականների հանրապետական օլիմպիադա մաթեմատիկա առարկայից',
-            startDate: '2026-02-15',
-            endDate: '2026-02-15',
-            registrationDeadline: '2026-02-10',
-            status: 'active',
-            participants: 156,
-            maxParticipants: 500,
+            name: "Mathematics Olympiad 2023",
+            description: "National mathematics competition for high school students",
+            date: "2023-04-05",
+            startDate: "2023-04-05",
+            duration: 120,
+            participants: 100,
+            maxParticipants: 150,
+            subject: "math",
+            status: "active",
             grades: [9, 10, 11, 12],
-            duration: 240,
-            problems: Array.from({length: 20}, (_, i) => i + 1)
+            participantsCount: 100,
+            averageScore: 85.3
         },
         {
             id: 2,
-            name: 'Կենսաբանության Օլիմպիադա 2026',
-            subject: 'Կենսաբանություն',
-            description: 'Կենսաբանության հանրապետական օլիմպիադայի մարզային փուլ',
-            startDate: '2026-01-25',
-            endDate: '2026-01-25',
-            registrationDeadline: '2026-01-20',
-            status: 'upcoming',
-            participants: 89,
-            maxParticipants: 300,
-            grades: [9, 10, 11, 12],
-            duration: 180,
-            problems: Array.from({length: 20}, (_, i) => i + 1)
+            name: "Physics Challenge 2023",
+            description: "National physics competition for high school students",
+            date: "2023-04-06",
+            startDate: "2023-04-06",
+            duration: 120,
+            participants: 95,
+            maxParticipants: 150,
+            subject: "physics",
+            status: "upcoming",
+            grades: [10, 11, 12],
+            participantsCount: 95,
+            averageScore: 83.7
         },
         {
             id: 3,
-            name: 'Ֆիզիկայի Օլիմպիադա 2025',
-            subject: 'Ֆիզիկա',
-            description: 'Ֆիզիկայի հանրապետական օլիմպիադա 2025',
-            startDate: '2025-12-10',
-            endDate: '2025-12-10',
-            status: 'completed',
-            participants: 234,
-            maxParticipants: 400,
+            name: "Chemistry Contest 2023",
+            description: "National chemistry competition for high school students",
+            date: "2023-04-07",
+            startDate: "2023-04-07",
+            duration: 90,
+            participants: 90,
+            maxParticipants: 120,
+            subject: "chemistry",
+            status: "active",
             grades: [10, 11, 12],
-            duration: 300,
-            problems: Array.from({length: 20}, (_, i) => i + 1)
+            participantsCount: 90,
+            averageScore: 82.4
+        },
+        {
+            id: 4,
+            name: "Biology Olympiad 2023",
+            description: "National biology competition for high school students",
+            date: "2023-04-08",
+            startDate: "2023-04-08",
+            duration: 90,
+            participants: 85,
+            maxParticipants: 100,
+            subject: "biology",
+            status: "completed",
+            grades: [9, 10, 11],
+            participantsCount: 85,
+            averageScore: 81.2
+        },
+        {
+            id: 5,
+            name: "Informatics Olympiad 2023",
+            description: "National informatics competition for high school students",
+            date: "2023-04-09",
+            startDate: "2023-04-09",
+            duration: 180,
+            participants: 80,
+            maxParticipants: 100,
+            subject: "informatics",
+            status: "completed",
+            grades: [10, 11, 12],
+            participantsCount: 80,
+            averageScore: 80.1
         }
     ],
     problems: [
+        // Math Olympiad - MCQ (questions 1-10)
+        {
+            id: 1, number: 1, competitionId: 1,
+            title: "Quadratic Equations", name: "Quadratic Equations",
+            difficulty: "easy", points: 5,
+            description: "Solve the following quadratic equation",
+            type: "multiple_choice", correctAnswer: "2"
+        },
+        {
+            id: 2, number: 2, competitionId: 1,
+            title: "Number Theory", name: "Number Theory",
+            difficulty: "easy", points: 5,
+            description: "Find all prime factors of the given number",
+            type: "multiple_choice", correctAnswer: "3"
+        },
+        {
+            id: 3, number: 3, competitionId: 1,
+            title: "Arithmetic Sequences", name: "Arithmetic Sequences",
+            difficulty: "easy", points: 5,
+            description: "Find the nth term of the arithmetic sequence",
+            type: "multiple_choice", correctAnswer: "1"
+        },
+        {
+            id: 4, number: 4, competitionId: 1,
+            title: "Probability", name: "Probability",
+            difficulty: "easy", points: 5,
+            description: "Calculate the probability of the given event",
+            type: "multiple_choice", correctAnswer: "4"
+        },
+        {
+            id: 5, number: 5, competitionId: 1,
+            title: "Logarithms", name: "Logarithms",
+            difficulty: "medium", points: 5,
+            description: "Simplify the logarithmic expression",
+            type: "multiple_choice", correctAnswer: "2"
+        },
+        {
+            id: 6, number: 6, competitionId: 1,
+            title: "Trigonometry", name: "Trigonometry",
+            difficulty: "medium", points: 5,
+            description: "Find the value of the trigonometric expression",
+            type: "multiple_choice", correctAnswer: "3"
+        },
+        {
+            id: 7, number: 7, competitionId: 1,
+            title: "Polynomials", name: "Polynomials",
+            difficulty: "medium", points: 5,
+            description: "Factor the given polynomial",
+            type: "multiple_choice", correctAnswer: "1"
+        },
+        {
+            id: 8, number: 8, competitionId: 1,
+            title: "Inequalities", name: "Inequalities",
+            difficulty: "medium", points: 5,
+            description: "Solve the system of inequalities",
+            type: "multiple_choice", correctAnswer: "4"
+        },
+        {
+            id: 9, number: 9, competitionId: 1,
+            title: "Functions", name: "Functions",
+            difficulty: "hard", points: 5,
+            description: "Find the domain and range of the composite function",
+            type: "multiple_choice", correctAnswer: "2"
+        },
+        {
+            id: 10, number: 10, competitionId: 1,
+            title: "Matrices", name: "Matrices",
+            difficulty: "hard", points: 5,
+            description: "Compute the determinant of the given matrix",
+            type: "multiple_choice", correctAnswer: "3"
+        },
+        // Math Olympiad - Short Answer (questions 11-15)
+        {
+            id: 11, number: 11, competitionId: 1,
+            title: "Geometry Problem", name: "Geometry Problem",
+            difficulty: "medium", points: 10,
+            description: "Calculate the area of the given geometric figure",
+            type: "short_answer", correctAnswer: "42"
+        },
+        {
+            id: 12, number: 12, competitionId: 1,
+            title: "Combinatorics", name: "Combinatorics",
+            difficulty: "hard", points: 10,
+            description: "How many ways can you arrange the objects?",
+            type: "short_answer", correctAnswer: "120"
+        },
+        {
+            id: 13, number: 13, competitionId: 1,
+            title: "Diophantine Equation", name: "Diophantine Equation",
+            difficulty: "hard", points: 10,
+            description: "Find the integer solution to the equation",
+            type: "short_answer", correctAnswer: "7"
+        },
+        {
+            id: 14, number: 14, competitionId: 1,
+            title: "Sequence Sum", name: "Sequence Sum",
+            difficulty: "hard", points: 10,
+            description: "Find the sum of the first n terms of the series",
+            type: "short_answer", correctAnswer: "256"
+        },
+        {
+            id: 15, number: 15, competitionId: 1,
+            title: "Modular Arithmetic", name: "Modular Arithmetic",
+            difficulty: "hard", points: 10,
+            description: "Find the remainder when dividing",
+            type: "short_answer", correctAnswer: "3"
+        },
+        // Physics Challenge problems
+        {
+            id: 16, number: 1, competitionId: 2,
+            title: "Newton's Laws", name: "Newton's Laws",
+            difficulty: "easy", points: 10,
+            description: "Apply Newton's laws to solve mechanics problems",
+            type: "multiple_choice", correctAnswer: "2"
+        },
+        {
+            id: 17, number: 2, competitionId: 2,
+            title: "Thermodynamics", name: "Thermodynamics",
+            difficulty: "medium", points: 15,
+            description: "Calculate heat transfer in the given system",
+            type: "multiple_choice", correctAnswer: "1"
+        }
+    ],
+    participants: [
         {
             id: 1,
             competitionId: 1,
-            number: 1,
-            title: "Հանրահաշիվ - Քառակուսային հավասարում",
-            description: "Գտնել $x^2 - 5x + 6 = 0$ հավասարման արմատների գումարը:",
-            type: "multiple_choice",
-            options: ["1", "5", "-6", "-5", "6"],
-            correctAnswer: "2",
-            points: 5,
-            difficulty: "easy"
+            name: "Anna Smith",
+            school: "Yerevan Physics-Math School",
+            grade: 10,
+            score: 95
         },
         {
             id: 2,
             competitionId: 1,
-            number: 2,
-            title: "Երկրաչափություն - Եռանկյուն",
-            description: "Ուղղանկյուն եռանկյան էջերն են 3 և 4: Գտնել ներքնաձիգը:",
-            type: "multiple_choice",
-            options: ["5", "6", "7", "25", "12"],
-            correctAnswer: "1",
-            points: 5,
-            difficulty: "easy"
+            name: "David Johnson",
+            school: "Gyumri School #3",
+            grade: 11,
+            score: 92
         },
         {
             id: 3,
             competitionId: 1,
-            number: 3,
-            title: "Թվաբանություն",
-            description: "Քանի՞ պարզ թիվ կա 10-ից 20 միջակայքում:",
-            type: "multiple_choice",
-            options: ["2", "3", "4", "5", "1"],
-            correctAnswer: "3", 
-            points: 5,
-            difficulty: "medium"
+            name: "Maria Garcia",
+            school: "Vanadzor High School",
+            grade: 10,
+            score: 88
         },
         {
             id: 4,
             competitionId: 1,
-            number: 4,
-            title: "Ֆունկցիաներ",
-            description: "Գտնել $f(x) = 2x + 1$ ֆունկցիայի արժեքը, երբ $x=3$:",
-            type: "multiple_choice",
-            options: ["6", "7", "5", "8", "4"],
-            correctAnswer: "2",
-            points: 5,
-            difficulty: "easy"
+            name: "Alex Brown",
+            school: "Yerevan State University School",
+            grade: 12,
+            score: 85
         },
         {
             id: 5,
             competitionId: 1,
-            number: 5,
-            title: "Տոկոսներ",
-            description: "Ապրանքի գինը 1000 դրամ է: Այն թանկացավ 20%-ով: Որքա՞ն դարձավ գինը:",
-            type: "multiple_choice",
-            options: ["1100", "1200", "1250", "1020", "1150"],
-            correctAnswer: "2",
-            points: 5,
-            difficulty: "easy"
-        },
-        { id: 6, competitionId: 1, number: 6, title: "Խնդիր 6", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 7, competitionId: 1, number: 7, title: "Խնդիր 7", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 8, competitionId: 1, number: 8, title: "Խնդիր 8", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 9, competitionId: 1, number: 9, title: "Խնդիր 9", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 10, competitionId: 1, number: 10, title: "Խնդիր 10", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 11, competitionId: 1, number: 11, title: "Խնդիր 11", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 12, competitionId: 1, number: 12, title: "Խնդիր 12", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 13, competitionId: 1, number: 13, title: "Խնդիր 13", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 14, competitionId: 1, number: 14, title: "Խնդիր 14", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        { id: 15, competitionId: 1, number: 15, title: "Խնդիր 15", description: "...", type: "multiple_choice", options: ["A","B","C","D","E"], correctAnswer: "A", points: 5, difficulty: "medium" },
-        {
-            id: 16,
-            competitionId: 1,
-            number: 16,
-            title: "Բարդ հավասարում",
-            description: "Գտնել $x$-ը, եթե $2^x = 32$:",
-            type: "short_answer",
-            correctAnswer: "5",
-            points: 10,
-            difficulty: "medium"
-        },
-        {
-            id: 17,
-            competitionId: 1,
-            number: 17,
-            title: "Երկրաչափություն",
-            description: "Գտնել 13 շառավղով շրջանագծի տրամագիծը:",
-            type: "short_answer",
-            correctAnswer: "26",
-            points: 10,
-            difficulty: "easy"
-        },
-        {
-            id: 18,
-            competitionId: 1,
-            number: 18,
-            title: "Հավանականություն",
-            description: "Զառը նետելիս 7 ընկնելու հավանականությունը:",
-            type: "short_answer",
-            correctAnswer: "0",
-            points: 15,
-            difficulty: "hard"
-        },
-        {
-            id: 19,
-            competitionId: 1,
-            number: 19,
-            title: "Քառակուսի",
-            description: "12 կողմով քառակուսու մակերեսը:",
-            type: "short_answer",
-            correctAnswer: "144",
-            points: 5,
-            difficulty: "easy"
-        },
-        {
-            id: 20,
-            competitionId: 1,
-            number: 20,
-            title: "Վերջին խնդիր",
-            description: "$5^2$ հավասար է:",
-            type: "short_answer",
-            correctAnswer: "25",
-            points: 5,
-            difficulty: "easy"
-        },
-        // Biology Problems (Competition 2)
-        {
-            id: 21,
-            competitionId: 2,
-            number: 1,
-            title: "Բջջի կառուցվածք",
-            description: "Ո՞ր օրգանոիդն է պատասխանատու էներգիայի արտադրության համար (բջջի էլեկտրակայան):",
-            type: "multiple_choice",
-            options: ["Ռիբոսոմ", "Միտոքոնդրիում", "Լիզոսոմ", "Գոլջիի ապարատ", "Կորիզ"],
-            correctAnswer: "2",
-            points: 5,
-            difficulty: "easy",
-            subject: "Կենսաբանություն"
-        },
-        {
-            id: 22,
-            competitionId: 2,
-            number: 2,
-            title: "ԴՆԹ",
-            description: "Ո՞ր ազոտային հիմքն է կոմպլեմենտար Ադենինին (A) ԴՆԹ-ում:",
-            type: "multiple_choice",
-            options: ["Ուրացիլ", "Ցիտոզին", "Գուանին", "Թիմին", "Ադենին"],
-            correctAnswer: "4",
-            points: 5,
-            difficulty: "medium",
-            subject: "Կենսաբանություն"
-        },
-        {
-            id: 23,
-            competitionId: 2,
-            number: 3,
-            title: "Մարդու անատոմիա",
-            description: "Քանի՞ խոռոչ ունի մարդու սիրտը:",
-            type: "short_answer",
-            correctAnswer: "4",
-            points: 5,
-            difficulty: "easy",
-            subject: "Կենսաբանություն"
-        },
-        {
-            id: 24,
-            competitionId: 2,
-            number: 4,
-            title: "Ֆոտոսինթեզ",
-            description: "Ի՞նչ է առաջանում ֆոտոսինթեզի լուսային փուլում:",
-            type: "multiple_choice",
-            options: ["Գլյուկոզ", "O2 և ATP", "CO2", "Ջուր", "Օսլա"],
-            correctAnswer: "2",
-            points: 10,
-            difficulty: "hard",
-            subject: "Կենսաբանություն"
-        },
-        {
-            id: 25,
-            competitionId: 2,
-            number: 5,
-            title: "Էկոլոգիա",
-            description: "Ո՞րն է բնապահպանական ամենամեծ խնդիրը, որը կապված է ջերմոցային էֆեկտի հետ:",
-            type: "multiple_choice",
-            options: ["Օզոնային անցքեր", "Գլոբալ տաքացում", "Թթվային անձրևներ", "Անտառահատումներ", "Ջրի աղտոտում"],
-            correctAnswer: "2",
-            points: 5,
-            difficulty: "medium",
-            subject: "Կենսաբանություն"
-        },
-        // Physics Problems (Competition 3)
-        {
-            id: 26,
-            competitionId: 3,
-            number: 1,
-            title: "Ուժի միավոր",
-            description: "Ո՞րն է ուժի չափման միավորը ՄՀ համակարգում:",
-            type: "multiple_choice",
-            options: ["Ջոուլ", "Վատտ", "Նյուտոն", "Պասկալ", "Կելվին"],
-            correctAnswer: "3",
-            points: 5,
-            difficulty: "easy",
-            subject: "Ֆիզիկա"
-        },
-        {
-            id: 27,
-            competitionId: 3,
-            number: 2,
-            title: "Լույսի արագություն",
-            description: "Մոտավորապես ինչքա՞ն է լույսի արագությունը վակուումում (կմ/վ):",
-            type: "short_answer",
-            correctAnswer: "300000",
-            points: 5,
-            difficulty: "medium",
-            subject: "Ֆիզիկա"
-        },
-        {
-            id: 28,
-            competitionId: 3,
-            number: 3,
-            title: "Նյուտոնի օրենքներ",
-            description: "$F=ma$ բանաձևը արտահայտում է Նյուտոնի որե՞րորդ օրենքը:",
-            type: "short_answer",
-            correctAnswer: "2",
-            points: 5,
-            difficulty: "easy",
-            subject: "Ֆիզիկա"
-        },
-        {
-            id: 29,
-            competitionId: 3,
-            number: 4,
-            title: "Էլեկտրականություն",
-            description: "Օհմի օրենքը շղթայի տեղամասի համար:",
-            type: "multiple_choice",
-            options: ["I=U/R", "I=UR", "I=R/U", "U=I/R", "R=IU"],
-            correctAnswer: "1",
-            points: 5,
-            difficulty: "medium",
-            subject: "Ֆիզիկա"
-        },
-        {
-            id: 30,
-            competitionId: 3,
-            number: 5,
-            title: "Մեխանիկա - Ազատ անկում",
-            description: "Եթե մարմինը ազատ ընկնում է, ի՞նչ արագություն կունենա 1 վայրկյան անց ($g \\approx 10$ մ/վ$^2$):",
-            type: "short_answer",
-            correctAnswer: "10",
-            points: 5,
-            difficulty: "medium",
-            subject: "Ֆիզիկա"
-        }
-    ],
-    results: [],
-    translations: {},
-    participants: [
-        {
-            id: 101,
-            firstName: 'Արմեն',
-            lastName: 'Սարգսյան',
-            school: 'Երևանի Ֆիզմաթ դպրոց',
+            name: "Sarah Wilson",
+            school: "Yerevan Physics-Math School",
             grade: 11,
-            city: 'Երևան',
-            email: 'armen.s@example.com',
-            registeredCompetitions: [1]
+            score: 82
         },
         {
-            id: 102,
-            firstName: 'Անի',
-            lastName: 'Գրիգորյան',
-            school: 'Քվանտ վարժարան',
+            id: 6,
+            competitionId: 2,
+            name: "Michael Lee",
+            school: "Gyumri School #3",
             grade: 10,
-            city: 'Երևան',
-            email: 'ani.g@example.com',
-            registeredCompetitions: [1]
+            score: 90
         },
         {
-            id: 103,
-            firstName: 'Դավիթ',
-            lastName: 'Պետրոսյան',
-            school: 'Այբ դպրոց',
-            grade: 12,
-            city: 'Երևան',
-            email: 'davit.p@example.com',
-            registeredCompetitions: [1]
-        },
-        {
-            id: 104,
-            firstName: 'Մարիամ',
-            lastName: 'Հովհաննիսյան',
-            school: 'Շիրակացու ճեմարան',
-            grade: 9,
-            city: 'Երևան',
-            email: 'mariam.h@example.com',
-            registeredCompetitions: [1, 2]
-        },
-        {
-            id: 105,
-            firstName: 'Գոռ',
-            lastName: 'Ավագյան',
-            school: 'Գյումրու Ֆոտոն վարժարան',
+            id: 7,
+            competitionId: 2,
+            name: "Emily Davis",
+            school: "Yerevan Physics-Math School",
             grade: 11,
-            city: 'Գյումրի',
-            email: 'gor.a@example.com',
-            registeredCompetitions: [1]
+            score: 87
         }
     ],
-    submissions: [
+    results: [
         {
             id: 1,
-            competitionId: 1,
-            participantId: 101,
-            answers: {
-                1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'A', 
-                6: 'B', 7: 'C', 8: 'D', 9: 'A', 10: 'B',
-                11: 'C', 12: 'D', 13: 'A', 14: 'B', 15: 'C',
-                16: 5, 17: 12, 18: 0, 19: 144, 20: 25
-            },
-            score: 18,
-            timestamp: '2026-02-15T14:30:00'
+            name: "Արմենտ Արմենտյան",
+            school: "Երևանի Ֆիզմաթ դպրոց",
+            subject: "Մաթեմատիկա",
+            score: 95
+        },
+        {
+            id: 2,
+            name: "Արմենտ Արմենտյան",
+            school: "Երևանի Ֆիզմաթ դպրոց",
+            subject: "Ֆիզիկա",
+            score: 90
+        },
+        {
+            id: 3,
+            name: "Արմենտ Արմենտյան",
+            school: "Երևանի Ֆիզմաթ դպրոց",
+            subject: "Քիմիա",
+            score: 85
+        },
+        {
+            id: 4,
+            name: "Արմենտ Արմենտյան",
+            school: "Երևանի Ֆիզմաթ դպրոց",
+            subject: "Կենսաբանություն",
+            score: 80
+        },
+        {
+            id: 5,
+            name: "Արմենտ Արմենտյան",
+            school: "Երևանի Ֆիզմաթ դպրոց",
+            subject: "Ինֆորմատիկա",
+            score: 75
         }
-    ],
-    // Grading Key (Correct Answers) for Competitions
-    // Using a map key: competitionId -> { problemId: correctValue }
-    answerKeys: {
-        1: {
-            1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E',
-            6: 'A', 7: 'B', 8: 'C', 9: 'D', 10: 'E',
-            11: 'A', 12: 'B', 13: 'C', 14: 'D', 15: 'E',
-            16: 5, 17: 12, 18: 0, 19: 144, 20: 25
-        }
-    },
-
-    // Answer Sheet Form Templates - defines the layout for OMR/OCR processing
-    // Coordinates are relative to the anchor markers, not absolute percentages
-    formTemplates: {
-        // Default template matching the standard school olympiad answer sheet
-        'default': {
-            name: 'Ստանդարտ Օլիմպիադա 2024',
-            paperSize: 'A4',
-            // Fiducial markers (black squares) for alignment detection
-            // Positions in mm from page edges (matches CSS in printAnswerSheetTemplate)
-            anchors: {
-                markerSize: 20, // pixels (20px squares)
-                topLeft: { fromTop: '15mm', fromLeft: '10mm' },
-                topRight: { fromTop: '15mm', fromRight: '10mm' },
-                midLeft: { fromTop: '48%', fromLeft: '10mm' },
-                bottomLeft: { fromBottom: '15mm', fromLeft: '10mm' },
-                bottomRight: { fromBottom: '15mm', fromRight: '10mm' }
-            },
-            sections: [
-                {
-                    id: 'mcq',
-                    type: 'multiple_choice',
-                    label: 'Ընտրովի (1-15)',
-                    questions: { start: 1, end: 15 },
-                    options: 4,
-                    // MCQ checkbox grid - 15 rows (questions), 4 columns (options)
-                    // Coordinates are RELATIVE TO ANCHOR BOUNDS (0.0 = top/left anchor, 1.0 = bottom/right anchor)
-                    region: {
-                        x: 0.142,     // 15.5% from left anchor
-                        y: 0.53,      // 52% from top anchor
-                        width: 0.28,  // 28% of content width (covers 4 checkbox columns)
-                        height: 0.45  // 45% of content height (covers 15 question rows)
-                    },
-                    grid: {
-                        rows: 15,     // 15 questions vertical
-                        columns: 4,   // 4 options horizontal (1,2,3,4)
-                        cellPadding: 0.08
-                    }
-                },
-                {
-                    id: 'short_answer',
-                    type: 'handwritten_number',
-                    label: 'Կարճ Պատասխան (16-20)',
-                    questions: { start: 16, end: 20 },
-                    maxDigits: 4,
-                    // Short answer input boxes - target the white boxes with handwritten numbers
-                    // Coordinates are RELATIVE TO ANCHOR BOUNDS (0.0 = top/left of content area, 1.0 = bottom/right)
-                    region: {
-                        x: 0.62,      // 58% from left edge of content bounds
-                        y: 0.49,      // 46% from top of content bounds (moved up)
-                        width: 0.25,  // 25% of content width
-                        height: 0.28  // 32% of content height
-                    },
-                    grid: {
-                        rows: 5,
-                        columns: 1
-                    }
-                }
-            ]
-        }
-    }
+    ]
 };
 
-// Export for Node.js environment if needed, otherwise it's a global in browser
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = MockData;
-}
+// Global exports for browser environment
+window.DataStore = dataStore;
+window.MockData = MockData;

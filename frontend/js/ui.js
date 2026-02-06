@@ -1,16 +1,21 @@
-/**
- * UI Component Manager
- * UI բաղադրիչների կառավարիչ
- */
-
 const UI = {
-    // Թարգմանություններ
-    t: MockData.translations,
+    // Թարգմանություններ - will be initialized in init()
+    t: {},
 
     /**
      * Initialize UI - load saved data from localStorage
      */
     init() {
+        // Wait for API to be available
+        if (!window.API) {
+            console.warn('API not available yet, retrying in 100ms...');
+            setTimeout(() => this.init(), 100);
+            return;
+        }
+        
+        // Initialize translations
+        this.t = window.API.getTranslations();
+        
         this.loadTemplatesFromStorage();
         console.log('UI initialized, templates loaded from localStorage');
     },
@@ -20,9 +25,9 @@ const UI = {
      */
     loadTemplatesFromStorage() {
         try {
-            const templates = API.getTemplates();
+            const templates = window.API.getTemplates();
             if (templates) {
-                Object.assign(MockData.formTemplates, templates);
+                Object.assign(window.API.getFormTemplates(), templates);
                 console.log('Loaded templates:', Object.keys(templates));
             }
         } catch (e) {
@@ -36,13 +41,12 @@ const UI = {
     saveTemplatesToStorage() {
         try {
             const toSave = {};
-            for (const key in MockData.formTemplates) {
-                if (key !== 'default') {
-                    toSave[key] = MockData.formTemplates[key];
-                }
+            for (const key in window.API.getFormTemplates()) {
+                // Save ALL templates including 'default'
+                toSave[key] = window.API.getFormTemplates()[key];
             }
-            API.saveTemplates(toSave);
-            console.log('Templates saved to localStorage');
+            window.API.saveTemplates(toSave);
+            console.log('Templates saved to localStorage:', Object.keys(toSave));
         } catch (e) {
             console.error('Failed to save templates to localStorage:', e);
         }
@@ -52,8 +56,8 @@ const UI = {
      * Ցուցադրել գլխավոր էջը
      */
     renderHome() {
-        const stats = API.getStatistics();
-        const competitions = API.getCompetitions();
+        const stats = window.API.getStatistics();
+        const competitions = window.API.getCompetitions();
         const upcomingCompetitions = competitions.filter(c => c.status === 'upcoming' || c.status === 'registration').slice(0, 3);
         
         return `
@@ -136,7 +140,7 @@ const UI = {
      * Ցուցադրել մրցույթների էջը
      */
     renderCompetitions() {
-        const competitions = API.getCompetitions();
+        const competitions = window.API.getCompetitions();
         
         return `
             <div class="page-content">
@@ -153,7 +157,7 @@ const UI = {
                     </select>
                     <select id="subject-filter" onchange="App.filterCompetitions()">
                         <option value="all">Բոլոր առարկաները</option>
-                        ${MockData.subjects.map(s => `<option value="${s.name}">${s.icon} ${s.name}</option>`).join('')}
+                        ${window.API.getSubjects().map(s => `<option value="${s.name}">${s.icon} ${s.name}</option>`).join('')}
                     </select>
                     <button class="btn btn-success" onclick="App.showAddCompetitionModal()">+ Ավելացնել մրցույթ</button>
                 </div>
@@ -207,7 +211,7 @@ const UI = {
      * Ցուցադրել խնդիրների էջը
      */
     renderProblems() {
-        const problems = API.getProblems();
+        const problems = window.API.getProblems();
         
         return `
             <div class="page-content">
@@ -225,7 +229,7 @@ const UI = {
                     </select>
                     <select id="subject-filter-problems" onchange="App.filterProblems()">
                         <option value="all">Բոլոր առարկաները</option>
-                        ${MockData.subjects.map(s => `<option value="${s.name}">${s.icon} ${s.name}</option>`).join('')}
+                        ${window.API.getSubjects().map(s => `<option value="${s.name}">${s.icon} ${s.name}</option>`).join('')}
                     </select>
                 </div>
                 
@@ -250,7 +254,7 @@ const UI = {
         // Fallback for missing subject - lookup via competition or use default
         let subject = problem.subject;
         if (!subject && problem.competitionId) {
-            const competition = API.getCompetitionById(problem.competitionId);
+            const competition = window.API.getCompetitionById(problem.competitionId);
             if (competition) {
                 subject = competition.subject;
             }
@@ -276,7 +280,7 @@ const UI = {
      * Ցուցադրել մասնակիցների էջը
      */
     renderParticipants() {
-        const participants = API.getParticipants();
+        const participants = window.API.getParticipants();
         
         return `
             <div class="page-content">
@@ -288,7 +292,7 @@ const UI = {
                            placeholder="🔍 Փնտրել մասնակիցների..." oninput="App.filterParticipants()">
                     <select id="grade-filter" onchange="App.filterParticipants()">
                         <option value="all">Բոլոր դասարանները</option>
-                        ${MockData.grades.map(g => `<option value="${g.value}">${g.label}</option>`).join('')}
+                        ${window.API.getGrades().map(g => `<option value="${g.value}">${g.label}</option>`).join('')}
                     </select>
                     <button class="btn btn-success" onclick="App.showAddParticipantModal()">+ Ավելացնել մասնակից</button>
                 </div>
@@ -343,7 +347,7 @@ const UI = {
      * Ցուցադրել արդյունքների էջը
      */
     renderResults() {
-        const competitions = API.getCompetitions().filter(c => c.status === 'completed');
+        const competitions = window.API.getCompetitions().filter(c => c.status === 'completed');
         
         return `
             <div class="page-content">
@@ -373,8 +377,8 @@ const UI = {
      * Մրցույթի արդյունքների աղյուսակի ցուցադրում
      */
     renderLeaderboard(competitionId) {
-        const leaderboard = API.getLeaderboard(competitionId);
-        const competition = API.getCompetitionById(competitionId);
+        const leaderboard = window.API.getLeaderboard(competitionId);
+        const competition = window.API.getCompetitionById(competitionId);
         
         if (competition.status !== 'completed') {
             return `
@@ -444,7 +448,7 @@ const UI = {
      * Դպրոցների էջի ցուցադրում
      */
     renderSchools() {
-        const schools = API.getSchools();
+        const schools = window.API.getSchools();
         
         return `
             <div class="page-content">
@@ -456,7 +460,7 @@ const UI = {
                            placeholder="🔍 Փնտրել դպրոց..." oninput="App.filterSchools()">
                     <select id="region-filter" onchange="App.filterSchools()">
                         <option value="all">Բոլոր մարզերը</option>
-                        ${MockData.regions.map(r => `<option value="${r}">${r}</option>`).join('')}
+                        ${window.API.getRegions().map(r => `<option value="${r}">${r}</option>`).join('')}
                     </select>
                     <button class="btn btn-success" onclick="App.showAddSchoolModal()">+ Ավելացնել դպրոց</button>
                 </div>
@@ -546,8 +550,8 @@ const UI = {
      * Գրանցման պատուհանի ցուցադրում
      */
     renderRegistrationModal(competitionId) {
-        const competition = API.getCompetitionById(competitionId);
-        const schools = API.getSchools();
+        const competition = window.API.getCompetitionById(competitionId);
+        const schools = window.API.getSchools();
         
         return `
             <div class="modal-header">
@@ -612,7 +616,7 @@ const UI = {
     printAnswerSheetTemplate(subject, competitionName, participantId = null) {
         // Find the template for this subject
         const templateId = this.findTemplateForSubject(subject);
-        const template = MockData.formTemplates[templateId] || MockData.formTemplates['default'];
+        const template = API.getFormTemplates()[templateId] || API.getFormTemplates()['default'];
         
         // Fetch participant if ID provided
         let participant = null;
@@ -694,8 +698,9 @@ const UI = {
                     '.header h2, .header h3 { margin: 5px 0; }' +
                     '.top-section { display: flex; justify-content: space-between; margin-bottom: 20px; }' +
                     '.personal-info { width: 55%; }' +
-                    '.info-row { margin-bottom: 15px; border-bottom: 1px solid black; padding-top: 25px; position: relative; }' +
-                    '.info-label { font-weight: bold; position: absolute; top: 5px; left: 0; font-size: 12px; }' +
+                    '.info-row { margin-bottom: 12px; border-bottom: 1px solid black; padding-bottom: 5px; display: flex; align-items: baseline; gap: 15px; min-height: 25px; }' +
+                    '.info-label { font-weight: bold; font-size: 12px; white-space: nowrap; }' +
+                    '.info-value { flex: 1; }' +
                     '.personal-number { width: 40%; border: 2px solid black; padding: 10px; }' +
                     '.bubble-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; text-align: center; }' +
                     '.square { display: inline-block; width: 16px; height: 16px; border: 1px solid black; margin: 1px; text-align: center; line-height: 14px; font-size: 10px; vertical-align: middle; }' +
@@ -844,7 +849,7 @@ const UI = {
                 </div>
 
                 <div style="margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 4px; border: 1px solid #cce5ff;">
-                    <label for="as-participant-select" style="font-weight: bold; display: block; margin-bottom: 5px;">Ընտրեք մասնակցին (տվյալները լրացնելու համար):</label>
+                    <label for="as-participant-select" style="font-weight: bold; display: block; margin-bottom: 5px;">Ընտրեք մասնակիցներից մեկը (տվյալները լրացնելու համար):</label>
                     <select id="as-participant-select" class="search-input" style="width: 100%; padding: 10px;">
                         <option value="">-- Դատարկ ձևաթուղթ --</option>
                         ${participants.map(p => {
@@ -906,6 +911,158 @@ const UI = {
         document.getElementById('btn-upload-scan').disabled = !fileName;
     },
 
+    /**
+     * Ցուցադրել սկանավորման արդյունքների հաստատման պատուհան
+     */
+    renderScanVerificationModal(competitionId, participantId, imageData, detectedAnswers, invalidAnswers = {}) {
+        console.log('[UI] renderScanVerificationModal called with:', { competitionId, participantId, detectedAnswers, invalidAnswers });
+        
+        const competition = API.getCompetitionById(competitionId);
+        const participant = API.getParticipantById(participantId);
+        const problems = API.getProblemsByCompetition(competitionId);
+        
+        console.log('[UI] Participant found:', participant);
+        console.log('[UI] Problems count:', problems.length);
+        
+        const participantName = participant ? (participant.name || `${participant.firstName || ''} ${participant.lastName || ''}`.trim()) : 'Unknown';
+        
+        // Check if there are any invalid answers
+        const hasInvalidAnswers = Object.keys(invalidAnswers).length > 0;
+        const invalidCount = Object.keys(invalidAnswers).length;
+        
+        // Make modal wider for this view
+        const modalContent = document.getElementById('modal-content');
+        modalContent.style.maxWidth = '1800px'; 
+        modalContent.style.width = '98%';
+
+        const jsonOutput = JSON.stringify(detectedAnswers, null, 2);
+
+        return `
+            <div class="modal-header" style="background: ${hasInvalidAnswers ? '#c0392b' : '#2c3e50'}; color: white;">
+                <h2>🔎 Verify and Submit (ID: ${participantId})</h2>
+                <button class="modal-close" style="color: white; font-size: 24px;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">&times;</button>
+            </div>
+            
+            ${hasInvalidAnswers ? `
+                <div style="background: #ffebee; border: 2px solid #c0392b; padding: 15px 20px; margin: 0;">
+                    <p style="margin: 0; color: #c0392b; font-weight: bold; font-size: 1.1em;">
+                        ⚠️ INVALID PAPER: ${invalidCount} question(s) have multiple options selected. 
+                        This paper cannot be submitted until corrected or marked as invalid.
+                    </p>
+                </div>
+            ` : ''}
+            
+            <div class="modal-body" style="display: flex; gap: 30px; min-height: 850px; padding: 20px;">
+                <!-- Left: Document View (Image) -->
+                <div style="flex: 1.5; background: #555; padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; overflow: hidden;">
+                    <p style="font-size: 1.1em; margin: 0 0 10px 0; color: #eee;">📄 Participant: <strong>${participantName}</strong></p>
+                    <p style="font-size: 0.9em; margin: 0 0 10px 0; color: #ccc;">Competition: ${competition?.name || 'Unknown'}</p>
+                    
+                    <div id="scan-container" style="width: 100%; height: 100%; background: #333; position: relative; border-radius: 2px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow: auto; display: flex; justify-content: center; align-items: flex-start;">
+                        ${imageData ? 
+                            `<div id="scan-wrapper" style="position: relative; max-width: 100%; max-height: 100%; display: block;">
+                                <img id="scan-image" src="${imageData}" crossorigin="anonymous" style="max-width: 100%; max-height: 800px; height: auto; display: block;">
+                             </div>` 
+                            : 
+                            `<div style="color: #bbb; text-align: center; margin-top: 50%;">Image not available</div>`
+                        }
+                    </div>
+                </div>
+                
+                <!-- Right: Data Extraction -->
+                <div style="flex: 1.5; overflow-y: auto; background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+                    <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">📊 Detected Answers</h3>
+                    
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bbdefb;">
+                        <p style="margin: 0; font-size: 0.95em;"><strong>Instructions:</strong> Review the detected answers against the scanned paper. Correct any errors in the fields below.</p>
+                    </div>
+
+                    <form id="verification-form">
+                        <table class="data-table" style="font-size: 1.1em;">
+                            <thead>
+                                <tr style="background: #eceff1;">
+                                    <th width="60" style="padding: 12px; text-align: center;">#</th>
+                                    <th style="padding: 12px;">Question</th>
+                                    <th width="150" style="padding: 12px;">Detected Answer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${problems.map(p => {
+                                    const isInvalid = invalidAnswers[p.id];
+                                    const rowStyle = isInvalid ? 'background: #ffebee;' : '';
+                                    const inputStyle = isInvalid 
+                                        ? 'width: 100%; text-align: center; font-weight: bold; font-size: 1.1em; color: #c0392b; border: 2px solid #c0392b; background: #ffcdd2;'
+                                        : 'width: 100%; text-align: center; font-weight: bold; font-size: 1.1em; color: #0288d1;';
+                                    const displayValue = isInvalid ? '' : (detectedAnswers[p.id] || '');
+                                    
+                                    return `
+                                    <tr style="${rowStyle}">
+                                        <td style="text-align: center; font-weight: bold; color: #555;">${p.number}</td>
+                                        <td>
+                                            <div style="font-weight: 500;">${p.title}</div>
+                                            <div style="font-size: 0.85em; color: #666;">${p.difficulty === 'easy' ? 'Easy' : (p.difficulty === 'medium' ? 'Medium' : 'Hard')} • ${p.points} points</div>
+                                            ${isInvalid ? '<div style="font-size: 0.85em; color: #c0392b; font-weight: bold;">⚠️ Multiple options selected!</div>' : ''}
+                                        </td>
+                                        <td>
+                                            <input type="text" id="verify-answer-${p.id}" value="${displayValue}" 
+                                                   class="form-control ${isInvalid ? 'invalid-answer' : ''}" 
+                                                   style="${inputStyle}" 
+                                                   placeholder="${isInvalid ? 'INVALID' : '-'}" 
+                                                   oninput="UI.updateJsonPreview(${competitionId}); UI.checkInvalidAnswers();"
+                                                   data-invalid="${isInvalid ? 'true' : 'false'}">
+                                        </td>
+                                    </tr>
+                                `}).join('')}
+                            </tbody>
+                        </table>
+                    </form>
+
+                    <h3 style="margin-top: 30px; font-size: 1em; color: #666;">JSON Data (Preview)</h3>
+                    <textarea id="json-preview" style="width: 100%; height: 100px; font-family: monospace; font-size: 11px; border: 1px solid #ccc; padding: 5px; background: #f5f5f5;" readonly>${jsonOutput}</textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 20px;">
+                <button class="btn btn-secondary" style="padding: 10px 20px; font-size: 1.1em;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">Cancel</button>
+                <button id="confirm-grade-btn" class="btn btn-success" style="padding: 10px 25px; font-size: 1.1em;" onclick="App.confirmScanSubmission(${competitionId}, ${participantId})">✅ Confirm & Submit</button>
+            </div>
+        `;
+    },
+    
+    // Check if all invalid answers have been corrected
+    checkInvalidAnswers() {
+        const invalidInputs = document.querySelectorAll('input[data-invalid="true"]');
+        const submitBtn = document.getElementById('submit-scan-btn');
+        
+        let allCorrected = true;
+        invalidInputs.forEach(input => {
+            if (!input.value || input.value === '' || input.value === 'INVALID') {
+                allCorrected = false;
+            }
+        });
+        
+        if (submitBtn) {
+            if (allCorrected && invalidInputs.length > 0) {
+                // All invalid answers have been manually corrected
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            } else if (invalidInputs.length > 0) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+                submitBtn.style.cursor = 'not-allowed';
+            }
+        }
+    },
+    
+    updateJsonPreview(competitionId) {
+        const problems = API.getProblemsByCompetition(competitionId);
+        const answers = {};
+        problems.forEach(p => {
+            const val = document.getElementById(`verify-answer-${p.id}`).value;
+            if (val) answers[p.id] = val;
+        });
+        document.getElementById('json-preview').value = JSON.stringify(answers, null, 2);
+    },
 
     // Current editor state
     editorState: {
@@ -948,19 +1105,40 @@ const UI = {
         const state = this.editorState;
         const templateId = state.subject.toLowerCase().replace(/\s+/g, '_') + '_template';
         
-        MockData.formTemplates[templateId] = {
+        // Validate against actual problems in storage
+        const validation = this.validateTemplateAgainstProblems(state);
+        
+        if (!validation.isValid) {
+            // Show warning but allow saving
+            const proceed = confirm(
+                '⚠️ Warning!\n\n' +
+                validation.warnings.join('\n') +
+                '\n\nContinue saving anyway?'
+            );
+            if (!proceed) return;
+        }
+        
+        const newTemplate = {
             name: state.templateName,
             paperSize: 'A4',
             subject: state.subject,
-            anchors: MockData.formTemplates['default'].anchors,
+            anchors: MockData.formTemplates['default']?.anchors || {
+                markerSize: 20,
+                topLeft: { fromTop: '15mm', fromLeft: '10mm' },
+                topRight: { fromTop: '15mm', fromRight: '10mm' },
+                bottomLeft: { fromBottom: '15mm', fromLeft: '10mm' },
+                bottomRight: { fromBottom: '15mm', fromRight: '10mm' }
+            },
             sections: [
                 {
                     id: 'mcq',
                     type: 'multiple_choice',
-                    label: 'Ընտրովի (' + state.mcqCount + ')',
+                    label: 'MCQ (' + state.mcqCount + ')',
                     questions: { start: 1, end: state.mcqCount },
                     options: state.mcqOptions,
-                    region: MockData.formTemplates['default'].sections[0].region,
+                    region: MockData.formTemplates['default']?.sections?.[0]?.region || {
+                        x: 0.142, y: 0.53, width: 0.28, height: 0.45
+                    },
                     grid: {
                         rows: state.mcqCount,
                         columns: state.mcqOptions,
@@ -970,10 +1148,12 @@ const UI = {
                 {
                     id: 'short_answer',
                     type: 'handwritten_number',
-                    label: 'Կարճ Պատ. (' + state.shortAnswerStart + '-' + (state.shortAnswerStart + state.shortAnswerCount - 1) + ')',
+                    label: 'Short (' + state.shortAnswerStart + '-' + (state.shortAnswerStart + state.shortAnswerCount - 1) + ')',
                     questions: { start: state.shortAnswerStart, end: state.shortAnswerStart + state.shortAnswerCount - 1 },
                     maxDigits: state.maxDigits,
-                    region: MockData.formTemplates['default'].sections[1].region,
+                    region: MockData.formTemplates['default']?.sections?.[1]?.region || {
+                        x: 0.62, y: 0.40, width: 0.25, height: 0.20
+                    },
                     grid: {
                         rows: state.shortAnswerCount,
                         columns: 1
@@ -982,19 +1162,129 @@ const UI = {
             ]
         };
         
+        API.setFormTemplate(templateId, newTemplate);
+        
+        // Also update 'default' template for scanning fallback
+        API.setFormTemplate('default', { ...newTemplate, name: 'Standard 2024' });
+        
         // Persist to localStorage
         this.saveTemplatesToStorage();
         
-        this.showSuccess('"' + state.templateName + '" ձևանմուշը պահպանվեց ' + state.subject + ' առարկայի համար:');
-        console.log('Saved template:', templateId, MockData.formTemplates[templateId]);
+        this.showSuccess('"' + state.templateName + '" saved for ' + state.subject + '!');
+        console.log('Saved template:', templateId, API.getFormTemplates()[templateId]);
     },
-
+    
+    /**
+     * Apply suggested problem counts from database
+     */
+    applyProblemSuggestions() {
+        const problemStats = this.getProblemStatsForSubject(this.editorState.subject);
+        if (problemStats.hasCompetitions && problemStats.totalProblems > 0) {
+            this.editorState.mcqCount = problemStats.suggestedMcq;
+            this.editorState.shortAnswerCount = problemStats.suggestedShort;
+            this.editorState.shortAnswerStart = problemStats.suggestedMcq + 1;
+            this.refreshEditorPreview();
+            App.render(); // Re-render the full page to update the sidebar
+        }
+    },
+    
+    /**
+     * Validate template against actual problems in storage
+     */
+    validateTemplateAgainstProblems(state) {
+        const warnings = [];
+        let isValid = true;
+        
+        // Find competitions for this subject
+        const competitions = API.getCompetitions().filter(c => 
+            c.subject === state.subject || c.subject?.toLowerCase() === state.subject?.toLowerCase()
+        );
+        
+        if (competitions.length === 0) {
+            // Not an error, just informational
+            return { isValid: true, warnings: [] };
+        }
+        
+        // Check each competition's problems
+        for (const comp of competitions) {
+            const problems = API.getProblemsByCompetition(comp.id);
+            if (problems.length === 0) continue;
+            
+            const mcqProblems = problems.filter(p => p.type === 'multiple_choice');
+            const shortProblems = problems.filter(p => p.type === 'short_answer');
+            const totalProblems = problems.length;
+            const templateTotal = state.mcqCount + state.shortAnswerCount;
+            
+            if (templateTotal !== totalProblems) {
+                isValid = false;
+                warnings.push(
+                    `"${comp.name}": Has ${totalProblems} problems, template has ${templateTotal}:`
+                );
+            }
+            
+            if (mcqProblems.length !== state.mcqCount) {
+                isValid = false;
+                warnings.push(
+                    `  • MCQ: Database has ${mcqProblems.length}, template has ${state.mcqCount}`
+                );
+            }
+            
+            if (shortProblems.length !== state.shortAnswerCount) {
+                isValid = false;
+                warnings.push(
+                    `  • Short Answer: Database has ${shortProblems.length}, template has ${state.shortAnswerCount}`
+                );
+            }
+        }
+        
+        return { isValid, warnings };
+    },
+    
+    /**
+     * Get problem statistics for the current subject
+     */
+    getProblemStatsForSubject(subject) {
+        const competitions = API.getCompetitions().filter(c => 
+            c.subject === subject || c.subject?.toLowerCase() === subject?.toLowerCase()
+        );
+        
+        let stats = {
+            hasCompetitions: competitions.length > 0,
+            competitions: [],
+            suggestedMcq: 0,
+            suggestedShort: 0,
+            totalProblems: 0
+        };
+        
+        for (const comp of competitions) {
+            const problems = API.getProblemsByCompetition(comp.id);
+            const mcqCount = problems.filter(p => p.type === 'multiple_choice').length;
+            const shortCount = problems.filter(p => p.type === 'short_answer').length;
+            
+            stats.competitions.push({
+                id: comp.id,
+                name: comp.name,
+                totalProblems: problems.length,
+                mcqCount,
+                shortCount
+            });
+            
+            // Use the first competition's counts as suggestions
+            if (stats.suggestedMcq === 0 && problems.length > 0) {
+                stats.suggestedMcq = mcqCount;
+                stats.suggestedShort = shortCount;
+                stats.totalProblems = problems.length;
+            }
+        }
+        
+        return stats;
+    },
     /**
      * Answer Sheet Editor - configure templates per subject
      */
     renderAnswerSheetEditor() {
-        const subjects = MockData.subjects;
-        const templates = Object.keys(MockData.formTemplates);
+        const subjects = API.getSubjects();
+        const templates = Object.keys(API.getFormTemplates());
         
         // Initialize subject if not set
         if (!this.editorState.subject) {
@@ -1009,22 +1299,89 @@ const UI = {
         
         const state = this.editorState;
         
+        // Get problem statistics for the current subject
+        const problemStats = this.getProblemStatsForSubject(state.subject);
+        const templateTotal = state.mcqCount + state.shortAnswerCount;
+        const hasMatch = problemStats.hasCompetitions && 
+            problemStats.suggestedMcq === state.mcqCount && 
+            problemStats.suggestedShort === state.shortAnswerCount;
+        
+        // Build the problem stats info box
+        let problemStatsHtml = '';
+        if (problemStats.hasCompetitions) {
+            const matchStatus = hasMatch 
+                ? '<span style="color: #28a745;">✓ Match</span>'
+                : '<span style="color: #dc3545;">⚠ Mismatch</span>';
+            
+            problemStatsHtml = `
+                <div style="background: ${hasMatch ? '#e8f5e9' : '#fff3e0'}; border: 1px solid ${hasMatch ? '#4caf50' : '#ff9800'}; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                        <span>📊 Database Problems</span>
+                        ${matchStatus}
+                    </div>
+                    <div style="font-size: 13px;">
+                        ${problemStats.competitions.slice(0, 2).map(c => `
+                            <div style="margin-bottom: 4px; padding: 4px; background: white; border-radius: 4px;">
+                                <strong>${c.name}</strong><br>
+                                <span style="color: #555;">MCQ: ${c.mcqCount} | Short: ${c.shortCount} | Total: ${c.totalProblems}</span>
+                            </div>
+                        `).join('')}
+                        ${problemStats.competitions.length > 2 ? '<div style="color: #666; font-style: italic;">+' + (problemStats.competitions.length - 2) + ' more...</div>' : ''}
+                    </div>
+                    ${!hasMatch ? `
+                        <button class="btn btn-sm" style="margin-top: 8px; width: 100%; background: #ff9800; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer;" 
+                                onclick="UI.applyProblemSuggestions()">
+                            🔄 Apply Suggested (${problemStats.suggestedMcq} + ${problemStats.suggestedShort})
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            problemStatsHtml = `
+                <div style="background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                    <div style="color: #666; font-size: 13px;">
+                        ℹ️ No competitions found for "${state.subject}".
+                    </div>
+                </div>
+            `;
+        }
+        
         return `
             <div class="page-header">
-                <h1>📝 Պատասխանաթերթիկի Խմբագրիչ</h1>
-                <p>Ստեղծել և կարգավորել պատասխանաթերթիկի ձևանմուշներ տարբեր առարկաների և մրցույթների համար</p>
+                <h1>📝 Answer Sheet Editor</h1>
+                <p>Create and configure answer sheet templates for different subjects and competitions</p>
             </div>
 
-            <div class="editor-container" style="display: grid; grid-template-columns: 350px 1fr; gap: 20px;">
+            <div class="editor-container" style="display: grid; grid-template-columns: 380px 1fr; gap: 20px;">
                 <!-- Sidebar Controls -->
                 <div class="editor-sidebar card" style="padding: 20px;">
-                    <h3>📋 Ձևանմուշի Կարգավորումներ</h3>
+                    <h3>📋 Template Settings</h3>
+                    
+                    <!-- Template Summary Box -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
+                        <div style="font-size: 32px; font-weight: bold;">${templateTotal}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Total Questions</div>
+                        <div style="display: flex; justify-content: space-around; margin-top: 10px; font-size: 13px;">
+                            <div>
+                                <div style="font-size: 18px; font-weight: bold;">${state.mcqCount}</div>
+                                <div style="opacity: 0.8;">MCQ (1-${state.mcqCount})</div>
+                            </div>
+                            <div style="border-left: 1px solid rgba(255,255,255,0.3);"></div>
+                            <div>
+                                <div style="font-size: 18px; font-weight: bold;">${state.shortAnswerCount}</div>
+                                <div style="opacity: 0.8;">Short (${state.shortAnswerStart}-${state.shortAnswerStart + state.shortAnswerCount - 1})</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Problem Stats Info -->
+                    ${problemStatsHtml}
                     
                     <!-- Existing Templates -->
                     <div style="margin-bottom: 15px;">
-                        <label style="font-weight: bold;">Բեռնել Առկա Ձևանմուշը</label>
+                        <label style="font-weight: bold;">Load Existing Template</label>
                         <select class="form-control" id="editor-template-select" onchange="UI.onTemplateSelect(this.value)">
-                            <option value="">-- Նոր Ձևանմուշ --</option>
+                            <option value="">-- New Template --</option>
                             ${templates.map(t => `<option value="${t}" ${state.templateId === t ? 'selected' : ''}>${MockData.formTemplates[t].name}</option>`).join('')}
                         </select>
                     </div>
@@ -1033,7 +1390,7 @@ const UI = {
                     
                     <!-- Template Name -->
                     <div style="margin-bottom: 15px;">
-                        <label style="font-weight: bold;">Ձևանմուշի Անվանում</label>
+                        <label style="font-weight: bold;">Template Name</label>
                         <input type="text" class="form-control" id="editor-template-name" 
                                value="${state.templateName}" 
                                onchange="UI.editorState.templateName = this.value; UI.refreshEditorPreview();">
@@ -1041,18 +1398,18 @@ const UI = {
                     
                     <!-- Subject -->
                     <div style="margin-bottom: 15px;">
-                        <label style="font-weight: bold;">Առարկա</label>
+                        <label style="font-weight: bold;">Subject</label>
                         <select class="form-control" id="editor-subject" onchange="UI.onSubjectChange(this.value)">
                             ${subjects.map(s => `<option value="${s.name}" ${state.subject === s.name ? 'selected' : ''}>${s.icon} ${s.name}</option>`).join('')}
                         </select>
                     </div>
                     
                     <hr>
-                    <h4>🔢 Ընտրովի Պատասխանով Հարցեր</h4>
+                    <h4>🔢 Multiple Choice Questions</h4>
                     
                     <!-- MCQ Count -->
                     <div style="margin-bottom: 15px;">
-                        <label>Ընտրովի Հարցերի Քանակ (1-ից N)</label>
+                        <label>MCQ Count (1 to N)</label>
                         <input type="number" class="form-control" id="editor-mcq-count" 
                                min="1" max="50" value="${state.mcqCount}"
                                onchange="UI.editorState.mcqCount = parseInt(this.value); UI.editorState.shortAnswerStart = parseInt(this.value) + 1; UI.refreshEditorPreview();">
@@ -1060,20 +1417,20 @@ const UI = {
                     
                     <!-- MCQ Options -->
                     <div style="margin-bottom: 15px;">
-                        <label>Տարբերակներ յուրաքանչյուր հարցի համար</label>
+                        <label>Options per Question</label>
                         <select class="form-control" id="editor-mcq-options" onchange="UI.editorState.mcqOptions = parseInt(this.value); UI.refreshEditorPreview();">
-                            <option value="3" ${state.mcqOptions === 3 ? 'selected' : ''}>3 տարբերակ (A, B, C)</option>
-                            <option value="4" ${state.mcqOptions === 4 ? 'selected' : ''}>4 տարբերակ (1, 2, 3, 4)</option>
-                            <option value="5" ${state.mcqOptions === 5 ? 'selected' : ''}>5 տարբերակ (A, B, C, D, E)</option>
+                            <option value="3" ${state.mcqOptions === 3 ? 'selected' : ''}>3 options (A, B, C)</option>
+                            <option value="4" ${state.mcqOptions === 4 ? 'selected' : ''}>4 options (1, 2, 3, 4)</option>
+                            <option value="5" ${state.mcqOptions === 5 ? 'selected' : ''}>5 options (A, B, C, D, E)</option>
                         </select>
                     </div>
                     
                     <hr>
-                    <h4>📝 Կարճ Պատասխանով Հարցեր</h4>
+                    <h4>📝 Short Answer Questions</h4>
                     
                     <!-- Short Answer Count -->
                     <div style="margin-bottom: 15px;">
-                        <label>Կարճ Պատասխանով Հարցերի Քանակ</label>
+                        <label>Short Answer Count</label>
                         <input type="number" class="form-control" id="editor-short-count" 
                                min="0" max="20" value="${state.shortAnswerCount}"
                                onchange="UI.editorState.shortAnswerCount = parseInt(this.value); UI.refreshEditorPreview();">
@@ -1081,7 +1438,7 @@ const UI = {
                     
                     <!-- Max Digits -->
                     <div style="margin-bottom: 15px;">
-                        <label>Առավելագույն Նիշերի Քանակ</label>
+                        <label>Max Digits</label>
                         <input type="number" class="form-control" id="editor-max-digits" 
                                min="1" max="10" value="${state.maxDigits}"
                                onchange="UI.editorState.maxDigits = parseInt(this.value); UI.refreshEditorPreview();">
@@ -1091,19 +1448,19 @@ const UI = {
                     
                     <!-- Action Buttons -->
                     <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="UI.saveEditorTemplate()">
-                        💾 Պահպանել Ձևանմուշը
+                        💾 Save Template
                     </button>
                     <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="UI.printAnswerSheetTemplate(UI.editorState.subject, UI.editorState.templateName)">
-                        🖨️ Տպելու Դիտում
+                        🖨️ Print Preview
                     </button>
                     <button class="btn btn-secondary" style="width: 100%;" onclick="UI.exportTemplateJSON()">
-                        📤 Արտահանել JSON
+                        📤 Export JSON
                     </button>
                 </div>
 
                 <!-- Live Preview Area -->
                 <div class="card" style="padding: 20px;">
-                    <h3>👁️ Ուղիղ Դիտում</h3>
+                    <h3>👁️ Live Preview</h3>
                     <div id="editor-preview-area">
                         ${this.renderEditorPreview()}
                     </div>
@@ -1341,9 +1698,9 @@ const UI = {
             </div>
         `;
     },
-
     /**
-     * Open Grading/OMR Modal
+     * Open Grading Modal - Shows paper and submitted answers (NO OCR here)
+     * OCR is done at submission time by school operator
      */
     openGradingModal(submissionId) {
         const submission = API.getSubmissionById(submissionId);
@@ -1352,6 +1709,11 @@ const UI = {
         
         const competition = API.getCompetitionById(submission.competitionId);
         const problems = API.getProblemsByCompetition(submission.competitionId);
+        const participant = API.getParticipantById(submission.userId);
+        const participantName = participant ? (participant.name || `${participant.firstName || ''} ${participant.lastName || ''}`.trim()) : 'Unknown';
+        
+        // Get the answers that were submitted by school operator
+        const submittedAnswers = submission.answers || {};
         
         // Make modal wider for this view
         modalContent.style.maxWidth = '1800px'; 
@@ -1359,13 +1721,14 @@ const UI = {
 
         modalContent.innerHTML = `
             <div class="modal-header" style="background: #2c3e50; color: white;">
-                <h2>🤖 OMR Ստուգում (ID: ${submissionId})</h2>
+                <h2>📋 Grading Review (ID: ${submissionId})</h2>
                 <button class="modal-close" style="color: white; font-size: 24px;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">&times;</button>
             </div>
             <div class="modal-body" style="display: flex; gap: 30px; min-height: 850px; padding: 20px;">
                 <!-- Left: Document View (Image) -->
                 <div style="flex: 1.5; background: #555; padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; overflow: hidden;">
-                    <p style="font-size: 1.1em; margin: 0 0 10px 0; color: #eee;">📄 ${submission.filename}</p>
+                    <p style="font-size: 1.1em; margin: 0 0 10px 0; color: #eee;">📄 Participant: <strong>${participantName}</strong></p>
+                    <p style="font-size: 0.9em; margin: 0 0 10px 0; color: #ccc;">Competition: ${competition?.name || 'Unknown'}</p>
                     
                     <div id="scan-container" style="width: 100%; height: 100%; background: #333; position: relative; border-radius: 2px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow: auto; display: flex; justify-content: center; align-items: flex-start;">
                         ${submission.imageData ? 
@@ -1373,69 +1736,60 @@ const UI = {
                                 <img id="scan-image" src="${submission.imageData}" crossorigin="anonymous" style="max-width: 100%; max-height: 800px; height: auto; display: block;">
                              </div>` 
                             : 
-                            `<div style="color: #bbb; text-align: center; margin-top: 50%;">Նկարը բացակայում է</div>`
+                            `<div style="color: #bbb; text-align: center; margin-top: 50%;">Image not available</div>`
                         }
-                        
-                        <!-- Scanning Overlay -->
-                        <div id="scan-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;">
-                            <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-                            <h3 style="color: white; margin: 0;">Կատարվում է OMR/OCR վերլուծություն...</h3>
-                            <p id="scan-status" style="color: #ccc; margin-top: 10px;">Նախապատրաստում...</p>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Right: Data Extraction -->
+                <!-- Right: Submitted Answers for Review -->
                 <div style="flex: 1.5; overflow-y: auto; background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
-                    <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">📊 Ճանաչված տվյալներ (Իրական ժամանակ)</h3>
+                    <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">📊 Submitted Answers (by School Operator)</h3>
                     
-                    <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #c8e6c9;">
-                        <span>Ճշգրտության հավանականություն:</span>
-                        <strong id="confidence-score" style="color: #2e7d32; font-size: 1.2em;">-</strong>
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bbdefb;">
+                        <p style="margin: 0; font-size: 0.95em;"><strong>Instructions:</strong> Review the answers submitted by the school operator against the scanned paper on the left. You can correct answers if needed before grading.</p>
                     </div>
 
-                    <!-- OMR Settings Panel -->
-                    <details style="background: #fff3e0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ffe0b2;">
-                        <summary style="cursor: pointer; font-weight: bold; color: #e65100;">⚙️ OMR Settings</summary>
-                        <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <label style="font-size: 0.85em; color: #666;">Gray Threshold (0-255):</label>
-                                <input type="range" id="omr-gray-threshold" min="80" max="180" value="120" style="width: 100%;">
-                                <span id="omr-gray-value" style="font-size: 0.85em;">120</span>
-                            </div>
-                            <div>
-                                <label style="font-size: 0.85em; color: #666;">Density Threshold (%):</label>
-                                <input type="range" id="omr-density-threshold" min="5" max="30" value="15" style="width: 100%;">
-                                <span id="omr-density-value" style="font-size: 0.85em;">15%</span>
-                            </div>
-                        </div>
-                        <button type="button" onclick="UI.rescanWithSettings()" style="margin-top: 10px; padding: 5px 15px; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer;">🔄 Rescan</button>
-                    </details>
-
-                    <form id="grading-form" style="opacity: 0.5; pointer-events: none;">
+                    <form id="grading-form">
                         <table class="data-table" style="font-size: 1.1em;">
                             <thead>
                                 <tr style="background: #eceff1;">
                                     <th width="40" style="padding: 12px; text-align: center;">#</th>
-                                    <th style="padding: 12px;">Հարց</th>
-                                    <th width="120" style="padding: 12px;">Ճանաչված</th>
-                                    <th width="120" style="padding: 12px;">Ճիշտ</th>
+                                    <th style="padding: 12px;">Question</th>
+                                    <th width="120" style="padding: 12px;">Submitted</th>
+                                    <th width="120" style="padding: 12px;">Correct</th>
                                 </tr>
                             </thead>
                             <tbody id="grading-table-body">
-                                <tr><td colspan="4" style="text-align: center; padding: 20px;">Տվյալները բեռնվում են...</td></tr>
+                                ${problems.map(p => {
+                                    const val = submittedAnswers[p.id] || '';
+                                    const isMatch = val && String(val).trim().toLowerCase() === String(p.correctAnswer).trim().toLowerCase();
+                                    const borderColor = val ? (isMatch ? '#a5d6a7' : '#ffccbc') : '#ddd';
+                                    return `
+                                        <tr>
+                                            <td style="text-align: center; font-weight: bold; color: #555;">${p.number}</td>
+                                            <td>
+                                                <div style="font-weight: 500;">${p.title}</div>
+                                                <div style="font-size: 0.85em; color: #666;">${p.difficulty === 'easy' ? 'Easy' : (p.difficulty === 'medium' ? 'Medium' : 'Hard')} • ${p.points} points</div>
+                                            </td>
+                                            <td style="padding: 8px;">
+                                                <input type="text" id="grade-input-${p.id}" value="${val}" 
+                                                    style="width: 100%; padding: 8px; border: 2px solid ${borderColor}; border-radius: 4px; font-weight: bold; font-size: 1.1em; text-align: center; color: #37474f;">
+                                            </td>
+                                            <td style="text-align: center; color: #2e7d32; font-weight: bold; background: #f1f8e9;">
+                                                ${p.correctAnswer}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </form>
                 </div>
             </div>
             <div class="modal-footer" style="padding: 20px;">
-                <button class="btn btn-secondary" style="padding: 10px 20px; font-size: 1.1em;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">Չեղարկել</button>
-                <button id="confirm-grade-btn" class="btn btn-success" disabled style="padding: 10px 25px; font-size: 1.1em; opacity: 0.5;" onclick="App.submitGrading(${submissionId})">✅ Հաստատել և Գնահատել</button>
+                <button class="btn btn-secondary" style="padding: 10px 20px; font-size: 1.1em;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">Cancel</button>
+                <button id="confirm-grade-btn" class="btn btn-success" style="padding: 10px 25px; font-size: 1.1em;" onclick="App.submitGrading(${submissionId})">✅ Confirm & Grade</button>
             </div>
-            <style>
-            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            </style>
         `;
         
         modal.classList.remove('hidden');
@@ -1444,83 +1798,29 @@ const UI = {
              document.getElementById('modal-content').style.width='';
              App.closeModal();
         };
+    },
 
-        // Start Processing by calling the helper method (which we will add next)
-        if (submission.imageData) {
-            // Store scan state for rescan functionality
-            this._currentScanState = {
-                imageUrl: submission.imageData,
-                problems: problems,
-                submissionId: submissionId
-            };
-            
-            // Initialize OMR settings sliders
-            this.initOMRSettingsSliders();
-            
-            this.processSubmissionImage(submission.imageData, problems).then(result => { // Expecting {extractedData, debugInfo}
-                const { extractedData, debugInfo } = result;
-
-                // Update UI with results
-                const form = document.getElementById('grading-form');
-                const tbody = document.getElementById('grading-table-body');
-                const overlay = document.getElementById('scan-overlay');
-                const btn = document.getElementById('confirm-grade-btn');
-                
-                // Draw Debug Overlay
-                this.drawDebugOverlay(debugInfo);
-
-                // Hide overlay
-                if(overlay) overlay.style.display = 'none';
-                if(form) {
-                    form.style.opacity = '1';
-                    form.style.pointerEvents = 'auto';
-                }
-                if(btn) {
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                }
-                const scoreEl = document.getElementById('confidence-score');
-                if(scoreEl) scoreEl.innerText = '92%'; // High likelyhood
-
-                // Render Rows
-                if(tbody) {
-                    tbody.innerHTML = '';
-                    
-                    // Sort problems: filled first
-                    const filledProblems = problems.filter(p => extractedData[p.id]);
-                    const emptyProblems = problems.filter(p => !extractedData[p.id]);
-                    
-                    // Helper to render row
-                    const renderRow = (p) => {
-                        const val = extractedData[p.id] || '';
-                        const isMatch = String(val).trim().toLowerCase() === String(p.correctAnswer).trim().toLowerCase();
-                        const color = val ? (isMatch ? '#a5d6a7' : '#ffccbc') : '#fff'; // Green if match, Red if mismatch, White if empty
-                        
-                        return `
-                            <tr>
-                                <td style="text-align: center; font-weight: bold; color: #555;">${p.id}</td>
-                                <td>${p.title}</td>
-                                <td style="padding: 8px;">
-                                    <input type="text" id="grade-input-${p.id}" value="${val}" 
-                                        style="width: 100%; padding: 8px; border: 2px solid ${color}; border-radius: 4px; font-weight: bold; font-size: 1.1em; text-align: center; color: #37474f;">
-                                </td>
-                                <td style="text-align: center; color: #2e7d32; font-weight: bold; background: #f1f8e9;">
-                                    ${p.correctAnswer}
-                                </td>
-                            </tr>
-                        `;
-                    };
-
-                    tbody.innerHTML += filledProblems.map(renderRow).join('');
-                    
-                    if (emptyProblems.length > 0) {
-                        tbody.innerHTML += `<tr><td colspan="4" style="text-align: center; color: #999; padding: 10px; border-top: 1px solid #eee; background: #fffcfc;">
-                            ...ևս ${emptyProblems.length} չլրացված պատասխաններ <button style="font-size: 0.8em; margin-left: 10px;" type="button" onclick="document.getElementById('more-rows').classList.toggle('hidden')">Ցուցադրել բոլորը</button>
-                        </td></tr>`;
-                        tbody.innerHTML += `<tbody id="more-rows" class="hidden">${emptyProblems.map(renderRow).join('')}</tbody>`;
-                    }
-                }
-            });
+    /**
+     * Toggle debug overlay visibility
+     */
+    toggleDebugOverlay() {
+        const canvas = document.getElementById('debug-canvas');
+        const btn = document.getElementById('debug-toggle-btn');
+        
+        if (!canvas) {
+            // Try to draw it first
+            if (App.tempDebugInfo) {
+                this.drawDebugOverlay(App.tempDebugInfo);
+            }
+            return;
+        }
+        
+        const isVisible = canvas.style.display !== 'none';
+        canvas.style.display = isVisible ? 'none' : 'block';
+        
+        if (btn) {
+            btn.textContent = isVisible ? '🔍 Debug OFF' : '🔍 Debug ON';
+            btn.style.background = isVisible ? '#666' : '#ff9800';
         }
     },
 
@@ -1633,18 +1933,44 @@ const UI = {
                 );
                 ctx.lineWidth = 2;
                 // Green if marked, Red outline if checked but empty
-                ctx.strokeStyle = box.isMarked ? '#00FF00' : 'rgba(255, 0, 0, 0.3)';
+                ctx.strokeStyle = box.isMarked ? '#00FF00' : 'rgba(255, 0, 0, 0.5)';
                 if (box.isMarked) {
-                     ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                     ctx.fillStyle = 'rgba(0, 255, 0, 0.4)';
                      ctx.fill();
                 }
                 ctx.stroke();
 
-                // Debug: Show density
-                if (box.density > 0.05) {
-                    ctx.fillStyle = '#000';
-                    ctx.font = '10px Arial';
-                    ctx.fillText(box.density.toFixed(2), box.x * scaleX, (box.y + box.h) * scaleY);
+                // Show density value for all boxes
+                const densityStr = box.density.toFixed(2);
+                ctx.font = 'bold 9px Arial';
+                
+                // Background for text
+                const textWidth = ctx.measureText(densityStr).width;
+                const textX = box.x * scaleX + 2;
+                const textY = (box.y + box.h - 3) * scaleY;
+                
+                ctx.fillStyle = box.isMarked ? 'rgba(0, 100, 0, 0.9)' : 'rgba(100, 0, 0, 0.8)';
+                ctx.fillRect(textX - 1, textY - 8, textWidth + 4, 10);
+                
+                ctx.fillStyle = '#fff';
+                ctx.fillText(densityStr, textX, textY);
+                
+                // Show option number at top of first row only (Q1)
+                if (box.qId === 1) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.fillRect(box.x * scaleX, (box.y - 14) * scaleY, 15, 12);
+                    ctx.fillStyle = '#ff0';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.fillText(box.option.toString(), box.x * scaleX + 3, (box.y - 4) * scaleY);
+                }
+                
+                // Show question number on the left for option 1 of each row
+                if (box.option === 1) {
+                    ctx.fillStyle = 'rgba(0, 0, 150, 0.9)';
+                    ctx.fillRect((box.x - 18) * scaleX, box.y * scaleY, 16, box.h * scaleY);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 9px Arial';
+                    ctx.fillText(`Q${box.qId}`, (box.x - 16) * scaleX, (box.y + box.h/2 + 3) * scaleY);
                 }
             });
         }
@@ -1740,6 +2066,68 @@ const UI = {
                 ctx.fillText(label, w.x * scaleX + 3, (w.y - 4) * scaleY);
             });
         }
+        
+        // --- Debug Info Panel (top-right) showing settings and results ---
+        let infoPanel = document.getElementById('debug-info-panel');
+        if (!infoPanel) {
+            infoPanel = document.createElement('div');
+            infoPanel.id = 'debug-info-panel';
+            infoPanel.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.9);
+                color: #fff;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 11px;
+                font-family: monospace;
+                max-width: 250px;
+                z-index: 100;
+                border: 2px solid #ff9800;
+            `;
+            wrapper.appendChild(infoPanel);
+        }
+        
+        // Summarize OMR detection
+        const omrSummary = {};
+        if (debugInfo.omrBoxes) {
+            debugInfo.omrBoxes.forEach(box => {
+                if (!omrSummary[box.qId]) omrSummary[box.qId] = { marked: [], densities: [] };
+                omrSummary[box.qId].densities.push(box.density);
+                if (box.isMarked) omrSummary[box.qId].marked.push(box.option);
+            });
+        }
+        
+        const settings = debugInfo.settings || { omrGrayThreshold: '?', ocrGrayThreshold: '?', densityThreshold: '?' };
+        const anchorsStatus = debugInfo.anchors?.detected ? '✅ Detected' : '⚠️ Fallback';
+        
+        infoPanel.innerHTML = `
+            <div style="font-weight: bold; color: #ff9800; margin-bottom: 8px; font-size: 13px;">🔍 DEBUG INFO</div>
+            <div style="margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #555;">
+                <div><b>Template:</b> ${debugInfo.templateName || 'default'}</div>
+                <div><b>Image:</b> ${debugInfo.imgWidth}×${debugInfo.imgHeight}px</div>
+                <div><b>Anchors:</b> ${anchorsStatus}</div>
+            </div>
+            <div style="margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #555;">
+                <div style="color: #0af;"><b>OMR Settings:</b></div>
+                <div>OMR Gray threshold: <b>${settings.omrGrayThreshold}</b></div>
+                <div>Density threshold: <b>${settings.densityThreshold}</b></div>
+                <div style="color: #0f0;"><b>OCR Settings:</b></div>
+                <div>OCR Gray threshold: <b>${settings.ocrGrayThreshold}</b></div>
+            </div>
+            <div>
+                <div style="color: #0f0;"><b>MCQ Detection:</b></div>
+                ${Object.keys(omrSummary).slice(0, 5).map(qId => {
+                    const q = omrSummary[qId];
+                    const maxDensity = Math.max(...q.densities).toFixed(3);
+                    const marked = q.marked.length > 0 ? q.marked.join(',') : '-';
+                    const status = q.marked.length > 1 ? '⚠️' : (q.marked.length === 1 ? '✓' : '○');
+                    return `<div>Q${qId}: ${status} ${marked} (max: ${maxDensity})</div>`;
+                }).join('')}
+                ${Object.keys(omrSummary).length > 5 ? `<div>...and ${Object.keys(omrSummary).length - 5} more</div>` : ''}
+            </div>
+        `;
         
         // Render OCR Preview Panel - show what Tesseract sees (hidable)
         if (debugInfo.ocrPreview && debugInfo.ocrPreview.length > 0) {
@@ -1905,11 +2293,12 @@ const UI = {
      * Process Image with Tesseract and Canvas OMR
      * @param {string} imageUrl - Image URL to process
      * @param {Array} problems - List of problems
-     * @param {Object} settings - OMR settings {grayThreshold, densityThreshold}
+     * @param {Object} settings - OMR/OCR settings {omrGrayThreshold, ocrGrayThreshold, densityThreshold}
      */
     async processSubmissionImage(imageUrl, problems, settings = {}) {
-        const grayThreshold = settings.grayThreshold || 120;
-        const densityThreshold = settings.densityThreshold || 0.15;
+        const omrGrayThreshold = settings.omrGrayThreshold || 100;
+        const ocrGrayThreshold = settings.ocrGrayThreshold || 130;
+        const densityThreshold = settings.densityThreshold || 0.20;
         
         const updateStatus = (msg) => {
             const el = document.getElementById('scan-status');
@@ -1922,6 +2311,25 @@ const UI = {
             img.src = imageUrl;
             
             img.onload = async () => {
+                // FORCE use MockData.formTemplates directly (bypass localStorage cache)
+                const templatesSource = MockData.formTemplates;
+                console.log('[Scan] FORCE using MockData.formTemplates directly');
+                
+                // Determine template from problems
+                let templateKey = 'default';
+                if (problems && problems.length > 0) {
+                    // Try to find subject from first problem
+                    const subject = problems[0].subject;
+                    if (subject) {
+                         templateKey = this.findTemplateForSubject(subject);
+                    }
+                }
+                const activeTemplate = templatesSource[templateKey] || templatesSource['default'] || MockData.formTemplates['default'];
+                console.log(`[Scan] Processing with template: ${templateKey} (${activeTemplate.name})`);
+                const mcqRegion = activeTemplate.sections?.find(s => s.type === 'multiple_choice')?.region;
+                console.log(`[Scan] MCQ Region: x=${mcqRegion?.x}, y=${mcqRegion?.y}, w=${mcqRegion?.width}, h=${mcqRegion?.height}`);
+                console.log(`[Scan] Template sections:`, activeTemplate.sections);
+
                 const results = {};
                 const debugInfo = {
                     imgWidth: img.width,
@@ -1929,7 +2337,13 @@ const UI = {
                     omrBoxes: [],
                     ocrWords: [],
                     ocrRegion: null,
-                    anchors: null
+                    anchors: null,
+                    settings: {
+                        omrGrayThreshold: omrGrayThreshold,
+                        ocrGrayThreshold: ocrGrayThreshold,
+                        densityThreshold: densityThreshold
+                    },
+                    templateName: activeTemplate.name || templateKey
                 };
                 
                 // Canvas for pixels
@@ -1952,13 +2366,13 @@ const UI = {
                     const worker = await Tesseract.createWorker('eng');
 
                     // Get OCR section from template
-                    const formTemplate = MockData.formTemplates['default'];
-                    const ocrSection = formTemplate?.sections?.find(s => s.type === 'handwritten_number');
+                    const ocrSection = activeTemplate?.sections?.find(s => s.type === 'handwritten_number' || s.type === 'open_answer');
                     
                     if (!ocrSection) {
-                        console.error('No handwritten_number section found in template');
-                        throw new Error('Template missing OCR section');
-                    }
+                        console.log('No handwritten_number/open_answer section found in template - skipping OCR');
+                        await worker.terminate();
+                        // Continue to OMR processing without OCR
+                    } else {
                     
                     // Calculate coordinates using detected anchors
                     const ocrRegion = ocrSection.region;
@@ -1997,7 +2411,7 @@ const UI = {
                         
                         // Inward crop padding to exclude border lines (as percentage of cell size)
                         const cropPadX = ocrW * 0.20;   // 20% from left/right edges
-                        const cropPadY = rowHeight * 0.20; // 20% from top/bottom edges
+                        const cropPadY = rowHeight * 0.10; // 10% from top/bottom edges
                         const croppedX = ocrX + cropPadX;
                         const croppedY = rowY + cropPadY;
                         const croppedW = ocrW - (cropPadX * 2);
@@ -2027,7 +2441,7 @@ const UI = {
                             const r = td[i], g = td[i+1], b = td[i+2];
                             const gray = 0.2126*r + 0.7152*g + 0.0722*b;
                             // Higher threshold to capture lighter pen strokes (like thin "1"s)
-                            const val = (gray < 140) ? 0 : 255;
+                            const val = (gray < ocrGrayThreshold) ? 0 : 255;
                             td[i] = td[i+1] = td[i+2] = val;
                         }
                         tempCtx.putImageData(tempData, 0, 0);
@@ -2116,6 +2530,7 @@ const UI = {
                     }
 
                     await worker.terminate();
+                    } // end of ocrSection else block
 
                 } catch (e) {
                     console.error("OCR Error", e);
@@ -2125,8 +2540,7 @@ const UI = {
                 updateStatus("OMR processing...");
                 
                 // Get MCQ section from template
-                const template = MockData.formTemplates["default"];
-                const mcqSection = template?.sections?.find(s => s.type === "multiple_choice");
+                const mcqSection = activeTemplate?.sections?.find(s => s.type === "multiple_choice");
                 
                 if (mcqSection) {
                     const mcqRegion = mcqSection.region;
@@ -2152,6 +2566,9 @@ const UI = {
                     const colWidth = totalWidth / mcqGrid.columns;
                     const rowHeightOMR = totalHeight / mcqGrid.rows;
                     
+                    // Track invalid questions (multiple options selected)
+                    const invalidQuestions = [];
+                    
                     // Grid is: rows = questions (1-15), columns = options (1-4)
                     for (let i = 0; i < (qEnd - qStart + 1); i++) {
                         const qId = qStart + i;
@@ -2159,6 +2576,7 @@ const UI = {
                         
                         let maxDensity = 0;
                         let bestOption = null;
+                        const markedOptions = []; // Track ALL marked options
                         
                         for (let opt = 0; opt < numOptions; opt++) {
                             const optX = startX + (opt * colWidth);  // Option = column
@@ -2176,7 +2594,7 @@ const UI = {
                                 
                                 for (let p = 0; p < data.length; p += 4) {
                                     const gray = (data[p] + data[p+1] + data[p+2]) / 3;
-                                    if (gray < grayThreshold) darkPixels++;  // Configurable threshold
+                                    if (gray < omrGrayThreshold) darkPixels++;  // Configurable threshold
                                 }
                                 
                                 const density = darkPixels / (data.length / 4);
@@ -2185,23 +2603,39 @@ const UI = {
                                 debugInfo.omrBoxes.push({
                                     x: sampleX, y: sampleY, w: sampleW, h: sampleH,
                                     density: density,
-                                    isMarked: isMarked
+                                    isMarked: isMarked,
+                                    qId: qId,
+                                    option: opt + 1
                                 });
 
-                                if (isMarked && density > maxDensity) {
-                                    maxDensity = density;
-                                    bestOption = opt + 1;
+                                if (isMarked) {
+                                    markedOptions.push(opt + 1);
+                                    if (density > maxDensity) {
+                                        maxDensity = density;
+                                        bestOption = opt + 1;
+                                    }
                                 }
                             }
                         }
                         
-                        if (bestOption) {
+                        // Check for multiple selections (invalid)
+                        if (markedOptions.length > 1) {
+                            invalidQuestions.push({
+                                qId: qId,
+                                markedOptions: markedOptions
+                            });
+                            results[qId] = 'INVALID'; // Mark as invalid
+                            console.warn(`[OMR] Question ${qId} has multiple options selected: ${markedOptions.join(', ')}`);
+                        } else if (bestOption) {
                             results[qId] = bestOption;
                         }
                     }
+                    
+                    // Store invalid questions in debugInfo for UI display
+                    debugInfo.invalidQuestions = invalidQuestions;
                 }
                 
-                resolve({ extractedData: results, debugInfo: debugInfo });
+                console.log('[Scan Complete] Extracted results (qNum -> answer):', results);
                 resolve({ extractedData: results, debugInfo: debugInfo });
             };
             
@@ -2282,7 +2716,7 @@ const UI = {
                     </div>
 
                     <div class="form-group">
-                        <label for="new-prob-desc">Խնդրի պահանջը *</label>
+                        <label for="new-prob-desc">Խնդիր պահանջը *</label>
                         <textarea id="new-prob-desc" rows="5" required></textarea>
                     </div>
 
@@ -2459,7 +2893,7 @@ const UI = {
         }
         
         const settings = {
-            grayThreshold: parseInt(graySlider.value),
+            omrGrayThreshold: parseInt(graySlider.value),
             densityThreshold: parseInt(densitySlider.value) / 100
         };
         
@@ -2568,3 +3002,6 @@ const UI = {
         }, 100);
     }
 };
+
+// Global export for browser environment
+window.UI = UI;

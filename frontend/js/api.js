@@ -27,17 +27,45 @@ class LocalStorageProvider {
     init() {
         if (!localStorage.getItem(this.STORAGE_KEYS.COMPETITIONS)) {
             localStorage.setItem(this.STORAGE_KEYS.COMPETITIONS, JSON.stringify(MockData.competitions));
+        } else {
+            // MERGE: Update competitions with missing fields from MockData
+            let storedCompetitions = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.COMPETITIONS));
+            let hasChanges = false;
+            storedCompetitions.forEach(comp => {
+                const mockComp = MockData.competitions.find(mc => mc.id === comp.id);
+                if (mockComp) {
+                    // Add missing fields from mock data
+                    ['description', 'startDate', 'duration', 'participants', 'maxParticipants', 'subject', 'status', 'grades'].forEach(field => {
+                        if (comp[field] === undefined && mockComp[field] !== undefined) {
+                            comp[field] = mockComp[field];
+                            hasChanges = true;
+                        }
+                    });
+                }
+            });
+            if (hasChanges) {
+                localStorage.setItem(this.STORAGE_KEYS.COMPETITIONS, JSON.stringify(storedCompetitions));
+            }
         }
         if (!localStorage.getItem(this.STORAGE_KEYS.PROBLEMS)) {
             localStorage.setItem(this.STORAGE_KEYS.PROBLEMS, JSON.stringify(MockData.problems));
         } else {
-            // MERGE: Ensure new mock problems are added to localStorage
+            // MERGE: Ensure new mock problems are added and existing ones updated
             let storedProblems = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PROBLEMS));
             let hasChanges = false;
             MockData.problems.forEach(mockProblem => {
-                if (!storedProblems.find(p => p.id === mockProblem.id)) {
+                const existing = storedProblems.find(p => p.id === mockProblem.id);
+                if (!existing) {
                     storedProblems.push(mockProblem);
                     hasChanges = true;
+                } else {
+                    // Add missing fields from mock data (number, correctAnswer, type, etc.)
+                    ['number', 'correctAnswer', 'type', 'difficulty', 'points', 'description'].forEach(field => {
+                        if (existing[field] === undefined && mockProblem[field] !== undefined) {
+                            existing[field] = mockProblem[field];
+                            hasChanges = true;
+                        }
+                    });
                 }
             });
             if (hasChanges) {
@@ -242,7 +270,9 @@ const API = {
     },
 
     getProblemsByCompetition(competitionId) {
-        return this.getProblems().filter(p => p.competitionId === parseInt(competitionId));
+        return this.getProblems()
+            .filter(p => p.competitionId === parseInt(competitionId))
+            .sort((a, b) => a.number - b.number); // Sort by question number
     },
 
     getProblemsByDifficulty(difficulty) {
@@ -268,7 +298,8 @@ const API = {
 
     getParticipantsByCompetition(competitionId) {
         return this.getParticipants().filter(p => 
-            p.registeredCompetitions && p.registeredCompetitions.includes(parseInt(competitionId))
+            (p.registeredCompetitions && p.registeredCompetitions.includes(parseInt(competitionId))) ||
+            p.competitionId === parseInt(competitionId)
         );
     },
 
@@ -479,10 +510,12 @@ const API = {
     },
 
     uploadAnswerSheet(submission) {
+        console.log('[API] uploadAnswerSheet called with:', submission);
         const submissions = this.getSubmissions();
         submission.id = Date.now();
         submissions.push(submission);
         this.provider.saveSubmissions(submissions);
+        console.log('[API] Submission saved with ID:', submission.id);
         return submission;
     },
 
@@ -495,30 +528,50 @@ const API = {
     },
 
     gradeSubmission(id, extractedAnswers) {
+        console.log('[API] gradeSubmission called with ID:', id, 'answers:', extractedAnswers);
+        console.log('[API] Answer keys (types):', Object.keys(extractedAnswers).map(k => `${k} (${typeof k})`));
+        
         const submissions = this.getSubmissions();
         const index = submissions.findIndex(s => s.id === parseInt(id));
         
-        if (index === -1) return null;
+        if (index === -1) {
+            console.error('[API] Submission not found for ID:', id);
+            return null;
+        }
 
         const submission = submissions[index];
         const competitionId = submission.competitionId;
         const problems = this.getProblemsByCompetition(competitionId);
         
+        console.log('[API] Problems for grading:', problems.map(p => ({id: p.id, idType: typeof p.id, number: p.number, correctAnswer: p.correctAnswer})));
+        
         let totalScore = 0;
         const details = [];
 
         for (const problem of problems) {
-            const userAnswer = extractedAnswers[problem.id];
+            // Try both number and string keys since keys could be either
+            let userAnswer = extractedAnswers[problem.id];
+            if (userAnswer === undefined) {
+                userAnswer = extractedAnswers[String(problem.id)];
+            }
+            console.log(`[API] Problem ${problem.id}: userAnswer="${userAnswer}", correctAnswer="${problem.correctAnswer}"`);
+            
             let isCorrect = false;
             let score = 0;
 
-            if (userAnswer) {
+            if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
                 const normUser = String(userAnswer).trim().toLowerCase();
                 const normCorrect = String(problem.correctAnswer).trim().toLowerCase();
+                console.log(`[API] Comparing: "${normUser}" vs "${normCorrect}"`);
                 if (normUser === normCorrect) {
                     isCorrect = true;
                     score = problem.points;
+                    console.log(`[API] CORRECT! +${score} points`);
+                } else {
+                    console.log(`[API] INCORRECT`);
                 }
+            } else {
+                console.log(`[API] No answer provided for problem ${problem.id}`);
             }
 
             totalScore += score;
@@ -541,16 +594,19 @@ const API = {
         const participant = this.getParticipantById(submission.userId) || {};
         const pName = participant.name || ((participant.firstName || '') + ' ' + (participant.lastName || '')).trim() || "Անհայտ";
 
-        this.addResult({
+        const newResult = {
             competitionId: competitionId,
             participantId: submission.userId,
             participantName: pName,
-            school: participant.school || "Անհայտ",
+            school: participant.school || "Unknown",
             score: totalScore,
             rank: 0,
             details: details
-        });
-
+        };
+        console.log('[API] Adding result:', newResult);
+        this.addResult(newResult);
+        
+        console.log('[API] Grading complete. Total score:', totalScore);
         return submission;
     },
 
@@ -565,9 +621,39 @@ const API = {
 
     logout() {
         this.provider.removeCurrentUser();
+    },
+
+    // ==================== Static/Reference Data ====================
+    getSubjects() {
+        return window.DataStore ? window.DataStore.getSubjects() : [];
+    },
+
+    getGrades() {
+        return window.DataStore ? window.DataStore.getGrades() : [];
+    },
+
+    getRegions() {
+        return window.DataStore ? window.DataStore.getRegions() : [];
+    },
+
+    getTranslations() {
+        return window.DataStore ? window.DataStore.getTranslations() : {};
+    },
+
+    getFormTemplates() {
+        return window.DataStore ? window.DataStore.getFormTemplates() : {};
+    },
+
+    setFormTemplate(key, template) {
+        if (window.DataStore) {
+            window.DataStore.setFormTemplate(key, template);
+        }
     }
 };
 
 // Initialize API with dependency injection
 const storageProvider = new LocalStorageProvider();
 API.init(storageProvider);
+
+// Global export for browser environment
+window.API = API;
