@@ -26,6 +26,12 @@ class DataStore {
                 'Գյումրի',
                 'Վանաձոր'
             ],
+            roles: {
+                guest: { id: 'guest', name: 'Հյուր' },
+                admin: { id: 'admin', name: 'Ադմինիստրատոր' },
+                school_operator: { id: 'school_operator', name: 'Դպրոցի օպերատոր' },
+                committee_member: { id: 'committee_member', name: 'Հանձնաժողովի անդամ' }
+            },
             translations: {
                 // Armenian translations
                 'home': 'Գլխավոր',
@@ -82,6 +88,10 @@ class DataStore {
 
     getRegions() {
         return this.data.regions;
+    }
+
+    getRoles() {
+        return this.data.roles;
     }
 
     getTranslations() {

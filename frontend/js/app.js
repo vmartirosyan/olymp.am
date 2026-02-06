@@ -17,12 +17,109 @@ const App = {
         
         // Նավիգացիայի կարգավորում
         this.setupNavigation();
+
+        // Դերերի կառավարում
+        this.setupRoleManagement();
         
         // Մոբայլ մենյուի կարգավորում
         this.setupMobileMenu();
         
         // Տեղափոխվել գլխավոր էջ
         this.navigateTo('home');
+    },
+
+    /**
+     * Դերերի կառավարում և Նավիգացիայի թարմացում
+     */
+    setupRoleManagement() {
+        // Initialize default user if not exists
+        if (!API.getCurrentUser()) {
+             API.setCurrentUser({ role: 'guest', name: 'Guest' });
+        }
+        
+        const currentUser = API.getCurrentUser() || { role: 'guest' };
+        const roleSelector = document.getElementById('role-selector');
+        
+        if (roleSelector) {
+            roleSelector.value = currentUser.role;
+            
+            roleSelector.addEventListener('change', (e) => {
+                const newRole = e.target.value;
+                const roleName = e.target.options[e.target.selectedIndex].text;
+                
+                const user = { 
+                    role: newRole, 
+                    name: roleName.split(' ')[0] // Just first word for simplicity
+                };
+                
+                API.setCurrentUser(user);
+                this.updateNavigationBasedOnRole(newRole);
+                
+                UI.showSuccess(`Դերը փոխվեց: ${user.name}`);
+                
+                // Navigate to home to ensure permissions are applied
+                this.navigateTo('home');
+            });
+        }
+        
+        this.updateNavigationBasedOnRole(currentUser.role);
+    },
+
+    /**
+     * Update Navigation items based on role
+     */
+    updateNavigationBasedOnRole(role) {
+        console.log('Updating navigation for role:', role);
+        const roles = window.DataStore ? window.DataStore.getRoles() : {};
+        
+        // Default visibility (everything visible)
+        const show = (id) => {
+            const el = document.getElementById('nav-' + id);
+            if (el) el.style.display = 'block';
+        };
+        const hide = (id) => {
+            const el = document.getElementById('nav-' + id);
+            if (el) el.style.display = 'none';
+        };
+        
+        // Helper to hide multiple
+        const hideList = (list) => list.forEach(hide);
+        const showList = (list) => list.forEach(show);
+        
+        // Reset all to visible first
+        const allNavs = ['home', 'competitions', 'problems', 'participants', 'results', 'schools', 'editor', 'grading', 'about'];
+        showList(allNavs);
+
+        switch (role) {
+            case 'guest':
+                // Guest: General info only
+                hideList(['editor', 'grading', 'schools', 'participants']); 
+                // Note: user asked for "general information on competitions, problems and results".
+                // I'm hiding schools & participants to differ from Admin, but showing Comp/Prob/Res
+                break;
+                
+            case 'school_operator':
+                // School Operator: Can print sheets, submit scans.
+                // Needs Competitions (to find sheets/submit), Schools (their school info).
+                // Doesn't need Editor (Template creation), Grading (Committee job).
+                hideList(['editor', 'grading']);
+                break;
+                
+            case 'committee_member':
+                // Committee: Add/Edit problems, Grade.
+                // Needs Editor (for problems/templates), Grading.
+                // Less focus on Schools maybe?
+                hideList(['schools']);
+                break;
+                
+            case 'admin':
+                // Admin: Everyting
+                break;
+                
+            default:
+                // Fallback to guest
+                hideList(['editor', 'grading', 'schools']);
+        }
     },
 
     /**
@@ -210,6 +307,8 @@ const App = {
      */
     viewCompetitionDetails(competitionId) {
         const competition = API.getCompetitionById(competitionId);
+        const currentUser = API.getCurrentUser();
+        const role = currentUser ? currentUser.role : 'guest';
         
         const subjects = API.getSubjects();
         const subjectObj = subjects.find(s => s.id === competition.subject) || { name: competition.subject, icon: '📚' };
@@ -226,6 +325,9 @@ const App = {
             'active': 'Ընթացքի մեջ',
             'completed': 'Ավարտված'
         };
+
+        const canEditProblems = role === 'admin' || role === 'committee_member';
+        const canSubmitAnswers = role === 'admin' || role === 'school_operator';
         
         modalContent.innerHTML = `
             <div class="modal-header">
@@ -250,14 +352,16 @@ const App = {
                                     <h3>#${p.number || '-'}: ${p.title}</h3>
                                     <p style="font-size: 0.85em; color: #666;">
                                         Տեսակ՝ ${p.type === 'multiple_choice' ? 'Բազմակի ընտրություն' : 'Կարճ պատասխան'}
-                                        ${p.correctAnswer ? ` | Ճիշտ՝ <strong>${p.correctAnswer}</strong>` : ''}
+                                        ${(p.correctAnswer && canEditProblems) ? ` | Ճիշտ՝ <strong>${p.correctAnswer}</strong>` : ''}
                                     </p>
                                 </div>
                                 <div class="problem-meta">
                                     <span class="difficulty difficulty-${p.difficulty}">${{easy:'Հեշտ',medium:'Միջին',hard:'Բարդ'}[p.difficulty] || p.difficulty}</span>
                                     <span class="points-badge">${p.points} միավոր</span>
-                                    <button class="btn btn-sm" onclick="App.closeModal(); App.showEditProblemModal(${p.id})" title="Խմբագրել">✏️</button>
-                                    <button class="btn btn-sm btn-danger" onclick="App.deleteProblem(${p.id})" title="Ջնջել">🗑️</button>
+                                    ${canEditProblems ? `
+                                        <button class="btn btn-sm" onclick="App.closeModal(); App.showEditProblemModal(${p.id})" title="Խմբագրել">✏️</button>
+                                        <button class="btn btn-sm btn-danger" onclick="App.deleteProblem(${p.id})" title="Ջնջել">🗑️</button>
+                                    ` : ''}
                                 </div>
                             </div>
                         `).join('')}
@@ -278,12 +382,22 @@ const App = {
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="App.closeModal()">Փակել</button>
-                <button class="btn btn-primary" onclick="App.closeModal(); App.showAddProblemModal(${competitionId})">➕ Ավելացնել խնդիր</button>
-                ${competition.status === 'registration' ? `
-                    <button class="btn btn-success" onclick="App.closeModal(); App.showRegistrationModal(${competitionId});">Գրանցվել</button>
+                ${canEditProblems ? `<button class="btn btn-primary" onclick="App.closeModal(); App.showAddProblemModal(${competitionId})">➕ Ավելացնել խնդիր</button>` : ''}
+                
+                ${(role === 'school_operator' || role === 'admin') ? `
+                    <button class="btn btn-info" style="background-color: #17a2b8; color: white; margin-left: 10px;" onclick="UI.printAnswerSheetTemplate('${competition.subject}', '${competition.name}')">🖨️ Տպել պատասխանաթերթիկ</button>
                 ` : ''}
-                ${competition.status === 'active' ? `
-                    <button class="btn btn-warning" onclick="App.closeModal(); App.showAnswerSheetModal(${competitionId});">📝 Լրացնել պատասխանները</button>
+
+                ${role === 'school_operator' || role === 'guest' || role === 'admin' ? 
+                    (competition.status === 'registration' ? `
+                    <button class="btn btn-success" style="margin-left: 10px;" onclick="App.closeModal(); App.showRegistrationModal(${competitionId});">Գրանցվել</button>
+                ` : '') : ''}
+                
+                ${competition.status === 'active' && canSubmitAnswers ? `
+                    <button class="btn btn-warning" style="margin-left: 10px;" onclick="App.closeModal(); App.showAnswerSheetModal(${competitionId});">📝 Լրացնել պատասխանները</button>
+                ` : ''}
+                
+                ${role === 'admin' && competition.status === 'active' ? `
                     <button class="btn btn-danger" style="margin-left: 10px;" onclick="App.finishCompetition(${competitionId})">🏁 Ավարտել մրցույթը</button>
                 ` : ''}
             </div>

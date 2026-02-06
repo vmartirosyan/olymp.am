@@ -13,23 +13,34 @@
 </head>
 <body>
     <header>
-        <div class="container">
-            <h1>🏆 Olymp.am</h1>
-            <p class="subtitle">Դպրոցական օլիմպիադաների կառավարման միասնական համակարգ</p>
+        <div class="container header-flex">
+            <div class="branding">
+                <h1>🏆 Olymp.am</h1>
+                <p class="subtitle">Դպրոցական օլիմպիադաների կառավարման միասնական համակարգ</p>
+            </div>
+            <div class="user-controls">
+                <select id="role-selector" class="role-selector" title="Ընտրել դերը">
+                    <option value="guest">Հյուր (Guest)</option>
+                    <option value="admin">Ադմինիստրատոր (Admin)</option>
+                    <option value="school_operator">Դպրոցի օպերատոր (School Operator)</option>
+                    <option value="committee_member">Հանձնաժողովի անդամ (Committee Mode)</option>
+                </select>
+            </div>
         </div>
     </header>
 
     <nav>
         <div class="container">
             <ul class="nav-menu">
-                <li><a href="#" data-page="home" class="active">Գլխավոր</a></li>
-                <li><a href="#" data-page="competitions">Մրցույթներ</a></li>
-                <li><a href="#" data-page="problems">Խնդիրներ</a></li>
-                <li><a href="#" data-page="participants">Մասնակիցներ</a></li>
-                <li><a href="#" data-page="results">Արդյունքներ</a></li>
-                <li><a href="#" data-page="schools">Դպրոցներ</a></li>
-                <li><a href="#" data-page="editor" style="color: #ffc107;">📝 Խմբագրիչ</a></li>                    
-                <li><a href="#" data-page="grading" style="color: #00bcd4;">✅ Գնահատում</a></li>                <li><a href="#" data-page="about">Մեր մասին</a></li>
+                <li id="nav-home"><a href="#" data-page="home" class="active">Գլխավոր</a></li>
+                <li id="nav-competitions"><a href="#" data-page="competitions">Մրցույթներ</a></li>
+                <li id="nav-problems"><a href="#" data-page="problems">Խնդիրներ</a></li>
+                <li id="nav-participants"><a href="#" data-page="participants">Մասնակիցներ</a></li>
+                <li id="nav-results"><a href="#" data-page="results">Արդյունքներ</a></li>
+                <li id="nav-schools"><a href="#" data-page="schools">Դպրոցներ</a></li>
+                <li id="nav-editor"><a href="#" data-page="editor" style="color: #ffc107;">📝 Խմբագրիչ</a></li>                    
+                <li id="nav-grading"><a href="#" data-page="grading" style="color: #00bcd4;">✅ Գնահատում</a></li>
+                <li id="nav-about"><a href="#" data-page="about">Մեր մասին</a></li>
             </ul>
             <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
         </div>
