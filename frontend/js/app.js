@@ -212,16 +212,21 @@ const App = {
     filterCompetitions() {
         const statusFilter = document.getElementById('status-filter').value;
         const subjectFilter = document.getElementById('subject-filter').value;
+        const gradeFilter = document.getElementById('grade-filter-competitions') ? 
+                            document.getElementById('grade-filter-competitions').value : 'all';
         
         const cards = document.querySelectorAll('.competition-card');
         cards.forEach(card => {
             const status = card.getAttribute('data-status');
             const subject = card.getAttribute('data-subject');
+            const gradesStr = card.getAttribute('data-grades') || '';
+            const cardGrades = gradesStr.split(',').filter(g => g).map(g => g.trim());
             
             const statusMatch = statusFilter === 'all' || status === statusFilter;
             const subjectMatch = subjectFilter === 'all' || subject === subjectFilter;
+            const gradeMatch = gradeFilter === 'all' || cardGrades.includes(gradeFilter);
             
-            card.style.display = statusMatch && subjectMatch ? 'flex' : 'none';
+            card.style.display = statusMatch && subjectMatch && gradeMatch ? 'flex' : 'none';
         });
     },
 
@@ -731,7 +736,10 @@ const App = {
         const searchQuery = document.getElementById('problem-search').value.toLowerCase();
         const difficultyFilter = document.getElementById('difficulty-filter').value;
         const subjectFilter = document.getElementById('subject-filter-problems').value;
+        const gradeFilter = document.getElementById('grade-filter-problems') ? 
+                            document.getElementById('grade-filter-problems').value : 'all';
         
+        // Filter individual items
         const items = document.querySelectorAll('.problem-item');
         items.forEach(item => {
             const title = item.querySelector('h3').textContent.toLowerCase();
@@ -743,6 +751,18 @@ const App = {
             const subjectMatch = subjectFilter === 'all' || subject === subjectFilter;
             
             item.style.display = searchMatch && difficultyMatch && subjectMatch ? 'flex' : 'none';
+        });
+
+        // Hide empty groups or groups not matching grade
+        const groups = document.querySelectorAll('.problem-group');
+        groups.forEach(group => {
+            const visibleItems = Array.from(group.querySelectorAll('.problem-item')).filter(item => item.style.display !== 'none');
+            
+            const gradesStr = group.getAttribute('data-grades') || '';
+            const groupGrades = gradesStr.split(',').filter(g => g).map(g => g.trim());
+            const gradeMatch = gradeFilter === 'all' || groupGrades.includes(gradeFilter);
+
+            group.style.display = (visibleItems.length > 0 && gradeMatch) ? 'block' : 'none';
         });
     },
 

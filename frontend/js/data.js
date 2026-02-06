@@ -215,40 +215,100 @@ const MockData = {
         }
     ],
     competitions: [
+        // Mathematics 2023 Group
         {
-            id: 1,
-            name: "Մաթեմատիկայի օլիմպիադա 2023",
-            description: "Հանրապետական մաթեմատիկայի օլիմպիադա ավագ դպրոցի աշակերտների համար",
+            id: 109,
+            groupName: "Մաթեմատիկայի օլիմպիադա 2023",
+            name: "Մաթեմատիկա - 9-րդ դասարան",
+            description: "Մաթեմատիկայի օլիմպիադա 9-րդ դասարանցիների համար",
             date: "2023-04-05",
             startDate: "2023-04-05",
             duration: 120,
-            participants: 100,
-            maxParticipants: 150,
+            participants: 25,
+            maxParticipants: 50,
             subject: "math",
             status: "active",
-            grades: [9, 10, 11, 12],
-            participantsCount: 100,
-            averageScore: 85.3
+            grades: [9]
         },
         {
-            id: 2,
-            name: "Ֆիզիկայի մրցույթ 2023",
-            description: "Հանրապետական ֆիզիկայի մրցույթ ավագ դպրոցի աշակերտների համար",
+            id: 110,
+            groupName: "Մաթեմատիկայի օլիմպիադա 2023",
+            name: "Մաթեմատիկա - 10-րդ դասարան",
+            description: "Մաթեմատիկայի օլիմպիադա 10-րդ դասարանցիների համար",
+            date: "2023-04-05",
+            startDate: "2023-04-05",
+            duration: 120,
+            participants: 30,
+            maxParticipants: 50,
+            subject: "math",
+            status: "active",
+            grades: [10]
+        },
+        {
+            id: 111,
+            groupName: "Մաթեմատիկայի օլիմպիադա 2023",
+            name: "Մաթեմատիկա - 11-րդ դասարան",
+            description: "Մաթեմատիկայի օլիմպիադա 11-րդ դասարանցիների համար",
+            date: "2023-04-05",
+            startDate: "2023-04-05",
+            duration: 120,
+            participants: 20,
+            maxParticipants: 50,
+            subject: "math",
+            status: "active",
+            grades: [11]
+        },
+        {
+            id: 112,
+            groupName: "Մաթեմատիկայի օլիմպիադա 2023",
+            name: "Մաթեմատիկա - 12-րդ դասարան",
+            description: "Մաթեմատիկայի օլիմպիադա 12-րդ դասարանցիների համար",
+            date: "2023-04-05",
+            startDate: "2023-04-05",
+            duration: 120,
+            participants: 25,
+            maxParticipants: 50,
+            subject: "math",
+            status: "active",
+            grades: [12]
+        },
+
+        // Physics 2023 Group
+        {
+            id: 209,
+            groupName: "Ֆիզիկայի մրցույթ 2023",
+            name: "Ֆիզիկա - 9-րդ դասարան",
+            description: "Ֆիզիկայի մրցույթ 9-րդ դասարանցիների համար",
             date: "2023-04-06",
             startDate: "2023-04-06",
             duration: 120,
-            participants: 95,
-            maxParticipants: 150,
+            participants: 20,
+            maxParticipants: 40,
             subject: "physics",
             status: "upcoming",
-            grades: [10, 11, 12],
-            participantsCount: 95,
-            averageScore: 83.7
+            grades: [9]
         },
         {
-            id: 3,
-            name: "Քիմիայի մրցույթ 2023",
-            description: "Հանրապետական քիմիայի մրցույթ ավագ դպրոցի աշակերտների համար",
+            id: 210,
+            groupName: "Ֆիզիկայի մրցույթ 2023",
+            name: "Ֆիզիկա - 10-րդ դասարան",
+            description: "Ֆիզիկայի մրցույթ 10-րդ դասարանցիների համար",
+            date: "2023-04-06",
+            startDate: "2023-04-06",
+            duration: 120,
+            participants: 25,
+            maxParticipants: 40,
+            subject: "physics",
+            status: "upcoming",
+            grades: [10]
+        },
+
+        // Single entries (Legacy/Other)
+        {
+            id: 312,
+            groupName: "Քիմիայի մրցույթ 2023",
+            name: "Քիմիա - 12-րդ դասարան",
+            description: "Քիմիայի մրցույթ",
             date: "2023-04-07",
             startDate: "2023-04-07",
             duration: 90,
@@ -256,159 +316,67 @@ const MockData = {
             maxParticipants: 120,
             subject: "chemistry",
             status: "active",
-            grades: [10, 11, 12],
-            participantsCount: 90,
-            averageScore: 82.4
+            grades: [12]
         },
-        {
-            id: 4,
-            name: "Կենսաբանության օլիմպիադա 2023",
-            description: "Հանրապետական կենսաբանության օլիմպիադա ավագ դպրոցի աշակերտների համար",
-            date: "2023-04-08",
-            startDate: "2023-04-08",
-            duration: 90,
-            participants: 85,
-            maxParticipants: 100,
-            subject: "biology",
-            status: "completed",
-            grades: [9, 10, 11],
-            participantsCount: 85,
-            averageScore: 81.2
-        },
-        {
-            id: 5,
-            name: "Ինֆորմատիկայի օլիմպիադա 2023",
-            description: "Հանրապետական ինֆորմատիկայի օլիմպիադա ավագ դպրոցի աշակերտների համար",
-            date: "2023-04-09",
-            startDate: "2023-04-09",
-            duration: 180,
-            participants: 80,
-            maxParticipants: 100,
-            subject: "informatics",
-            status: "completed",
-            grades: [10, 11, 12],
-            participantsCount: 80,
-            averageScore: 80.1
-        }
     ],
     problems: [
-        // Math Olympiad - MCQ (questions 1-10)
+        // Math Olympiad - Grade 9 Problems (ID 109)
         {
-            id: 1, number: 1, competitionId: 1,
+            id: 1, number: 1, competitionId: 109,
             title: "Քառակուսային հավասարումներ", name: "Քառակուսային հավասարումներ",
             difficulty: "easy", points: 5,
             description: "Լուծեք տրված քառակուսային հավասարումը",
             type: "multiple_choice", correctAnswer: "2"
         },
         {
-            id: 2, number: 2, competitionId: 1,
+            id: 2, number: 2, competitionId: 109,
             title: "Թվերի տեսություն", name: "Թվերի տեսություն",
             difficulty: "easy", points: 5,
             description: "Գտեք տրված թվի բոլոր պարզ արտադրիչները",
             type: "multiple_choice", correctAnswer: "3"
         },
+        // Math Olympiad - Grade 10 Problems (ID 110)
         {
-            id: 3, number: 3, competitionId: 1,
+            id: 3, number: 1, competitionId: 110,
             title: "Թվաբանական պրոգրեսիաներ", name: "Թվաբանական պրոգրեսիաներ",
             difficulty: "easy", points: 5,
             description: "Գտեք թվաբանական պրոգրեսիայի n-րդ անդամը",
             type: "multiple_choice", correctAnswer: "1"
         },
         {
-            id: 4, number: 4, competitionId: 1,
+            id: 4, number: 2, competitionId: 110,
             title: "Հավանականություն", name: "Հավանականություն",
             difficulty: "easy", points: 5,
             description: "Հաշվեք տրված պատահարի հավանականությունը",
             type: "multiple_choice", correctAnswer: "4"
         },
+        // Math Olympiad - Grade 11 Problems (ID 111)
         {
-            id: 5, number: 5, competitionId: 1,
+            id: 5, number: 1, competitionId: 111,
             title: "Լոգարիթմներ", name: "Լոգարիթմներ",
             difficulty: "medium", points: 5,
             description: "Պարզեցրեք լոգարիթմական արտահայտությունը",
             type: "multiple_choice", correctAnswer: "2"
         },
+        // Math Olympiad - Grade 12 Problems (ID 112)
         {
-            id: 6, number: 6, competitionId: 1,
-            title: "Եռանկյունաչափություն", name: "Եռանկյունաչափություն",
-            difficulty: "medium", points: 5,
-            description: "Գտեք եռանկյունաչափական արտահայտության արժեքը",
-            type: "multiple_choice", correctAnswer: "3"
-        },
-        {
-            id: 7, number: 7, competitionId: 1,
-            title: "Բազմանդամներ", name: "Բազմանդամներ",
-            difficulty: "medium", points: 5,
-            description: "Վերլուծեք բազմանդամը արտադրիչների",
-            type: "multiple_choice", correctAnswer: "1"
-        },
-        {
-            id: 8, number: 8, competitionId: 1,
-            title: "Անհավասարումներ", name: "Անհավասարումներ",
-            difficulty: "medium", points: 5,
-            description: "Լուծեք անհավասարումների համակարգը",
-            type: "multiple_choice", correctAnswer: "4"
-        },
-        {
-            id: 9, number: 9, competitionId: 1,
+            id: 9, number: 1, competitionId: 112,
             title: "Ֆունկցիաներ", name: "Ֆունկցիաներ",
             difficulty: "hard", points: 5,
             description: "Գտեք բարդ ֆունկցիայի որոշման և արժեքների տիրույթները",
             type: "multiple_choice", correctAnswer: "2"
         },
+        // Physics - Grade 9 (209)
         {
-            id: 10, number: 10, competitionId: 1,
-            title: "Մատրիցներ", name: "Մատրիցներ",
-            difficulty: "hard", points: 5,
-            description: "Հաշվեք տրված մատրիցի որոշիչը",
-            type: "multiple_choice", correctAnswer: "3"
-        },
-        // Math Olympiad - Short Answer (questions 11-15)
-        {
-            id: 11, number: 11, competitionId: 1,
-            title: "Երկրաչափական խնդիր", name: "Երկրաչափական խնդիր",
-            difficulty: "medium", points: 10,
-            description: "Հաշվեք տրված երկրաչափական պատկերի մակերեսը",
-            type: "short_answer", correctAnswer: "42"
-        },
-        {
-            id: 12, number: 12, competitionId: 1,
-            title: "Կոմբինատորիկա", name: "Կոմբինատորիկա",
-            difficulty: "hard", points: 10,
-            description: "Քանի՞ եղանակով կարելի է դասավորել օբյեկտները",
-            type: "short_answer", correctAnswer: "120"
-        },
-        {
-            id: 13, number: 13, competitionId: 1,
-            title: "Դիոֆանտյան հավասարում", name: "Դիոֆանտյան հավասարում",
-            difficulty: "hard", points: 10,
-            description: "Գտեք հավասարման ամբողջ լուծումը",
-            type: "short_answer", correctAnswer: "7"
-        },
-        {
-            id: 14, number: 14, competitionId: 1,
-            title: "Հաջորդականության գումար", name: "Հաջորդականության գումար",
-            difficulty: "hard", points: 10,
-            description: "Գտեք շարքի առաջին n անդամների գումարը",
-            type: "short_answer", correctAnswer: "256"
-        },
-        {
-            id: 15, number: 15, competitionId: 1,
-            title: "Մոդուլային թվաբանություն", name: "Մոդուլային թվաբանություն",
-            difficulty: "hard", points: 10,
-            description: "Գտեք բաժանման մնացորդը",
-            type: "short_answer", correctAnswer: "3"
-        },
-        // Physics Challenge problems
-        {
-            id: 16, number: 1, competitionId: 2,
+            id: 16, number: 1, competitionId: 209,
             title: "Նյուտոնի օրենքներ", name: "Նյուտոնի օրենքներ",
             difficulty: "easy", points: 10,
             description: "Կիրառեք Նյուտոնի օրենքները մեխանիկայի խնդիրները լուծելու համար",
             type: "multiple_choice", correctAnswer: "2"
         },
+        // Physics - Grade 10 (210)
         {
-            id: 17, number: 2, competitionId: 2,
+            id: 17, number: 1, competitionId: 210,
             title: "Ջերմադինամիկա", name: "Ջերմադինամիկա",
             difficulty: "medium", points: 15,
             description: "Հաշվեք ջերմության փոխանցումը տրված համակարգում",
@@ -418,7 +386,7 @@ const MockData = {
     participants: [
         {
             id: 1,
-            competitionId: 1,
+            competitionId: 110,
             name: "Անահիտ Գրիգորյան",
             school: "Երևանի Ֆիզմաթ դպրոց",
             grade: 10,
@@ -426,7 +394,7 @@ const MockData = {
         },
         {
             id: 2,
-            competitionId: 1,
+            competitionId: 111,
             name: "Դավիթ Սարգսյան",
             school: "Գյումրու թիվ 3 դպրոց",
             grade: 11,
@@ -434,7 +402,7 @@ const MockData = {
         },
         {
             id: 3,
-            competitionId: 1,
+            competitionId: 110,
             name: "Մարիամ Հովհաննիսյան",
             school: "Վանաձորի ավագ դպրոց",
             grade: 10,
@@ -442,7 +410,7 @@ const MockData = {
         },
         {
             id: 4,
-            competitionId: 1,
+            competitionId: 112,
             name: "Ալեքսան Պետրոսյան",
             school: "ԵՊՀ Առընթեր դպրոց",
             grade: 12,
@@ -450,7 +418,7 @@ const MockData = {
         },
         {
             id: 5,
-            competitionId: 1,
+            competitionId: 111,
             name: "Սոնա Խաչատրյան",
             school: "Երևանի Ֆիզմաթ դպրոց",
             grade: 11,
@@ -458,7 +426,7 @@ const MockData = {
         },
         {
             id: 6,
-            competitionId: 2,
+            competitionId: 210,
             name: "Միքայել Հարությունյան",
             school: "Գյումրու թիվ 3 դպրոց",
             grade: 10,
@@ -466,10 +434,10 @@ const MockData = {
         },
         {
             id: 7,
-            competitionId: 2,
+            competitionId: 210,
             name: "Էլեն Ավետիսյան",
             school: "Երևանի Ֆիզմաթ դպրոց",
-            grade: 11,
+            grade: 10,
             score: 87
         }
     ],

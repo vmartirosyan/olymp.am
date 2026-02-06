@@ -142,6 +142,22 @@ const UI = {
     renderCompetitions() {
         const competitions = window.API.getCompetitions();
         
+        // Group competitions
+        const groups = {};
+        const singles = [];
+        
+        competitions.forEach(c => {
+            if (c.groupName) {
+                if (!groups[c.groupName]) groups[c.groupName] = [];
+                groups[c.groupName].push(c);
+            } else {
+                singles.push(c);
+            }
+        });
+
+        // Combine for rendering
+        const groupKeys = Object.keys(groups);
+        
         return `
             <div class="page-content">
                 <h2>🏆 Մրցույթներ</h2>
@@ -159,15 +175,112 @@ const UI = {
                         <option value="all">Բոլոր առարկաները</option>
                         ${window.API.getSubjects().map(s => `<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
                     </select>
+                    <select id="grade-filter-competitions" onchange="App.filterCompetitions()">
+                        <option value="all">Բոլոր դասարանները</option>
+                        ${window.API.getGrades().map(g => `<option value="${g.value}">${g.label}</option>`).join('')}
+                    </select>
                     <button class="btn btn-success" onclick="App.showAddCompetitionModal()">+ Ավելացնել մրցույթ</button>
                 </div>
                 
                 <!-- Մրցույթների ցուցակ -->
                 <div class="competition-list" id="competitions-list">
-                    ${competitions.map(comp => this.renderCompetitionCard(comp)).join('')}
+                    ${groupKeys.map(key => this.renderCompetitionGroupCard(key, groups[key])).join('')}
+                    ${singles.map(comp => this.renderCompetitionCard(comp)).join('')}
                 </div>
             </div>
         `;
+    },
+
+    /**
+     * Մրցույթի խմբի քարտ
+     */
+    renderCompetitionGroupCard(groupName, competitions) {
+        // Use the first competition for shared metadata
+        const main = competitions[0];
+        const subjects = window.API.getSubjects();
+        const subjectObj = subjects.find(s => s.id === main.subject) || { name: main.subject, icon: '📚' };
+        
+        // Determine overall status (if any is active, show active)
+        const statuses = competitions.map(c => c.status);
+        let groupStatus = 'completed';
+        if (statuses.includes('active')) groupStatus = 'active';
+        else if (statuses.includes('registration')) groupStatus = 'registration';
+        else if (statuses.includes('upcoming')) groupStatus = 'upcoming';
+
+        const statusLabels = {
+            'registration': 'Գրանցումը բաց է',
+            'upcoming': 'Սպասվող',
+            'active': 'Ընթացքի մեջ',
+            'completed': 'Ավարտված'
+        };
+
+        // Collect grades
+        const allGrades = competitions.map(c => (c.grades && c.grades[0]) || c.grade).filter(g => g).sort((a,b) => a-b);
+        const gradeRange = allGrades.length > 0 ? `${allGrades.join(', ')}-րդ դասարաններ` : 'Տարբեր դասարաններ';
+
+        return `
+            <div class="competition-card competition-group" data-status="${groupStatus}" data-subject="${main.subject}" data-grades="${allGrades.join(',')}">
+                <div class="competition-info">
+                    <h3>${groupName}</h3>
+                    <p>${gradeRange}</p>
+                     <div class="competition-meta">
+                        <span class="meta-badge">📅 ${this.formatDate(main.startDate)}</span>
+                        <span class="meta-badge">${subjectObj.icon} ${subjectObj.name}</span>
+                        <span class="meta-badge">📚 ${competitions.length} մրցույթ</span>
+                    </div>
+                </div>
+                <div class="competition-actions">
+                    <span class="status-badge status-${groupStatus}">${statusLabels[groupStatus]}</span>
+                    <br><br>
+                    <button class="btn" onclick="UI.viewCompetitionGroupDetails('${groupName.replace(/'/g, "\\'")}')">Տեսնել բոլորը</button>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * Ցուցադրել խմբի մանրամասները (բոլոր ենթա-մրցույթները)
+     */
+    viewCompetitionGroupDetails(groupName) {
+        const allCompetitions = window.API.getCompetitions();
+        const groupCompetitions = allCompetitions.filter(c => c.groupName === groupName).sort((a,b) => {
+            const ga = (a.grades && a.grades[0]) || 0;
+            const gb = (b.grades && b.grades[0]) || 0;
+            return ga - gb;
+        });
+
+        const modal = document.getElementById('modal-container');
+        const modalContent = document.getElementById('modal-content');
+
+        modalContent.innerHTML = `
+            <div class="modal-header">
+                <h2>${groupName}</h2>
+                <button class="modal-close" onclick="App.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Ընտրեք դասարանը՝ մրցույթը կառավարելու համար.</p>
+                <div class="list-group">
+                    ${groupCompetitions.map(comp => {
+                        const grade = (comp.grades && comp.grades[0]) || '?';
+                        return `
+                            <div class="list-group-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #eee;">
+                                <div>
+                                    <h4 style="margin: 0;">${grade}-րդ դասարան</h4>
+                                    <small class="text-muted">${comp.participants} մասնակից | ${comp.status}</small>
+                                </div>
+                                <button class="btn btn-sm" onclick="App.closeModal(); App.viewCompetitionDetails(${comp.id})">Կառավարել</button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="App.closeModal()">Փակել</button>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+        document.querySelector('.modal-backdrop').onclick = () => App.closeModal();
     },
 
     /**
@@ -186,8 +299,10 @@ const UI = {
         
         const statusClass = `status-${competition.status}`;
         
+        const grades = (competition.grades || []).join(',');
+
         return `
-            <div class="competition-card" data-status="${competition.status}" data-subject="${competition.subject}">
+            <div class="competition-card" data-status="${competition.status}" data-subject="${competition.subject}" data-grades="${grades}">
                 <div class="competition-info">
                     <h3>${competition.name}</h3>
                     <p>${competition.description}</p>
@@ -216,6 +331,43 @@ const UI = {
     renderProblems() {
         const problems = window.API.getProblems();
         
+        // Group problems by Grade (Competition Grades)
+        const grouped = {};
+        const noGradeKey = 'Ընդհանուր / Այլ';
+        const groupGrades = {};
+        
+        problems.forEach(p => {
+            let key = noGradeKey;
+            let grades = [];
+            if (p.competitionId) {
+                const comp = window.API.getCompetitionById(p.competitionId);
+                if (comp && comp.grades && comp.grades.length > 0) {
+                    // Sort grades to ensure consistent keys
+                    const sortedGrades = [...comp.grades].sort((a,b) => a-b);
+                    grades = sortedGrades;
+                    // Use singular/plural form
+                    const classLabel = sortedGrades.length > 1 ? 'դասարաններ' : 'դասարան';
+                    key = sortedGrades.join(', ') + '-րդ ' + classLabel;
+                    
+                    if (!groupGrades[key]) groupGrades[key] = [];
+                    grades.forEach(g => {
+                        if(!groupGrades[key].includes(g)) groupGrades[key].push(g);
+                    });
+                }
+            }
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(p);
+        });
+
+        // Sort keys (groups) - try to sort by first grade number
+        const sortedKeys = Object.keys(grouped).sort((a, b) => {
+            if (a === noGradeKey) return 1;
+            if (b === noGradeKey) return -1;
+            const numA = parseInt(a);
+            const numB = parseInt(b);
+            return numA - numB;
+        });
+
         return `
             <div class="page-content">
                 <h2>📚 Խնդիրներ</h2>
@@ -234,11 +386,23 @@ const UI = {
                         <option value="all">Բոլոր առարկաները</option>
                         ${window.API.getSubjects().map(s => `<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
                     </select>
+                    <select id="grade-filter-problems" onchange="App.filterProblems()">
+                        <option value="all">Բոլոր դասարանները</option>
+                        ${window.API.getGrades().map(g => `<option value="${g.value}">${g.label}</option>`).join('')}
+                    </select>
                 </div>
                 
-                <!-- Խնդիրների ցուցակ -->
-                <div class="problems-list" id="problems-list">
-                    ${problems.map(problem => this.renderProblemItem(problem)).join('')}
+                <!-- Խնդիրների ցուցակ (Grouped) -->
+                <div class="problems-container" id="problems-list">
+                    ${sortedKeys.map(key => `
+                        <div class="problem-group" data-grades="${(groupGrades[key] || []).join(',')}">
+                            <h3 style="margin: 1.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eee; color: #1e3a5f;">${key}</h3>
+                            <div class="problems-list">
+                                ${grouped[key].map(problem => this.renderProblemItem(problem)).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${problems.length === 0 ? '<p>Խնդիրներ չկան</p>' : ''}
                 </div>
             </div>
         `;
