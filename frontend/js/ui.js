@@ -938,13 +938,13 @@ const UI = {
         const jsonOutput = JSON.stringify(detectedAnswers, null, 2);
 
         return `
-            <div class="modal-header" style="background: ${hasInvalidAnswers ? '#c0392b' : '#2c3e50'}; color: white;">
+            <div class="modal-header" style="background: ${hasInvalidAnswers ? '#c0392b' : '#2c3e50'}; color: white; position: sticky; top: 0; z-index: 10;">
                 <h2>🔎 Verify and Submit (ID: ${participantId})</h2>
                 <button class="modal-close" style="color: white; font-size: 24px;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">&times;</button>
             </div>
             
             ${hasInvalidAnswers ? `
-                <div style="background: #ffebee; border: 2px solid #c0392b; padding: 15px 20px; margin: 0;">
+                <div style="background: #ffebee; border: 2px solid #c0392b; padding: 15px 20px; margin: 0; position: sticky; top: 60px; z-index: 9;">
                     <p style="margin: 0; color: #c0392b; font-weight: bold; font-size: 1.1em;">
                         ⚠️ INVALID PAPER: ${invalidCount} question(s) have multiple options selected. 
                         This paper cannot be submitted until corrected or marked as invalid.
@@ -952,9 +952,9 @@ const UI = {
                 </div>
             ` : ''}
             
-            <div class="modal-body" style="display: flex; gap: 30px; min-height: 850px; padding: 20px;">
+            <div class="modal-body" style="display: flex; gap: 30px; min-height: 850px; padding: 20px; align-items: flex-start;">
                 <!-- Left: Document View (Image) -->
-                <div style="flex: 1.5; background: #555; padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; overflow: hidden;">
+                <div style="flex: 1.5; background: #555; padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; overflow: hidden; position: sticky; top: 80px; max-height: calc(100vh - 200px); align-self: flex-start;">
                     <p style="font-size: 1.1em; margin: 0 0 10px 0; color: #eee;">📄 Participant: <strong>${participantName}</strong></p>
                     <p style="font-size: 0.9em; margin: 0 0 10px 0; color: #ccc;">Competition: ${competition?.name || 'Unknown'}</p>
                     
@@ -1720,13 +1720,13 @@ const UI = {
         modalContent.style.width = '98%';
 
         modalContent.innerHTML = `
-            <div class="modal-header" style="background: #2c3e50; color: white;">
+            <div class="modal-header" style="background: #2c3e50; color: white; position: sticky; top: 0; z-index: 10;">
                 <h2>📋 Grading Review (ID: ${submissionId})</h2>
                 <button class="modal-close" style="color: white; font-size: 24px;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">&times;</button>
             </div>
-            <div class="modal-body" style="display: flex; gap: 30px; min-height: 850px; padding: 20px;">
+            <div class="modal-body" style="display: flex; gap: 30px; min-height: 850px; padding: 20px; align-items: flex-start;">
                 <!-- Left: Document View (Image) -->
-                <div style="flex: 1.5; background: #555; padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; overflow: hidden;">
+                <div style="flex: 1.5; background: #555; padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; overflow: hidden; position: sticky; top: 80px; max-height: calc(100vh - 200px); align-self: flex-start;">
                     <p style="font-size: 1.1em; margin: 0 0 10px 0; color: #eee;">📄 Participant: <strong>${participantName}</strong></p>
                     <p style="font-size: 0.9em; margin: 0 0 10px 0; color: #ccc;">Competition: ${competition?.name || 'Unknown'}</p>
                     
