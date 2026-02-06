@@ -978,3 +978,44 @@ footer p {
         padding: 1rem;
     }
 }
+
+/* Answer Option Styling */
+.answer-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 15px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+}
+
+.answer-option:hover {
+    border-color: #2c5aa0;
+    background: #f0f7ff;
+}
+
+.answer-option input[type="radio"] {
+    margin: 0;
+}
+
+.answer-option input[type="radio"]:checked + span {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.answer-option:has(input[type="radio"]:checked) {
+    border-color: #4CAF50;
+    background: #e8f5e9;
+}
+
+.answer-option.selected {
+    border-color: #4CAF50;
+    background: #e8f5e9;
+}
+
+.answer-option span {
+    font-weight: bold;
+}

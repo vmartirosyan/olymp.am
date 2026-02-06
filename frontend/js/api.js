@@ -34,9 +34,16 @@ class LocalStorageProvider {
             storedCompetitions.forEach(comp => {
                 const mockComp = MockData.competitions.find(mc => mc.id === comp.id);
                 if (mockComp) {
-                    // Add missing fields from mock data
-                    ['description', 'startDate', 'duration', 'participants', 'maxParticipants', 'subject', 'status', 'grades'].forEach(field => {
+                    // Add missing fields from mock data and update localized fields
+                    ['startDate', 'duration', 'participants', 'maxParticipants', 'subject', 'status', 'grades'].forEach(field => {
                         if (comp[field] === undefined && mockComp[field] !== undefined) {
+                            comp[field] = mockComp[field];
+                            hasChanges = true;
+                        }
+                    });
+                    // Always update localized text fields
+                    ['name', 'description'].forEach(field => {
+                        if (mockComp[field] !== undefined && comp[field] !== mockComp[field]) {
                             comp[field] = mockComp[field];
                             hasChanges = true;
                         }
@@ -59,9 +66,16 @@ class LocalStorageProvider {
                     storedProblems.push(mockProblem);
                     hasChanges = true;
                 } else {
-                    // Add missing fields from mock data (number, correctAnswer, type, etc.)
-                    ['number', 'correctAnswer', 'type', 'difficulty', 'points', 'description'].forEach(field => {
+                    // Add missing fields from mock data and update localized fields
+                    ['number', 'correctAnswer', 'type', 'difficulty', 'points'].forEach(field => {
                         if (existing[field] === undefined && mockProblem[field] !== undefined) {
+                            existing[field] = mockProblem[field];
+                            hasChanges = true;
+                        }
+                    });
+                    // Always update localized text fields
+                    ['title', 'name', 'description'].forEach(field => {
+                        if (mockProblem[field] !== undefined && existing[field] !== mockProblem[field]) {
                             existing[field] = mockProblem[field];
                             hasChanges = true;
                         }
@@ -75,16 +89,24 @@ class LocalStorageProvider {
         if (!localStorage.getItem(this.STORAGE_KEYS.PARTICIPANTS)) {
             localStorage.setItem(this.STORAGE_KEYS.PARTICIPANTS, JSON.stringify(MockData.participants));
         } else {
-            // MERGE: Update participants with missing city data
+            // MERGE: Update participants with localized names and schools
             let storedParticipants = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PARTICIPANTS));
             let hasChanges = false;
             storedParticipants.forEach(p => {
-                if (!p.city) {
-                    const mockP = MockData.participants.find(mp => mp.id === p.id);
-                    if (mockP && mockP.city) {
+                const mockP = MockData.participants.find(mp => mp.id === p.id);
+                if (mockP) {
+                    // Update city if missing
+                    if (!p.city && mockP.city) {
                         p.city = mockP.city;
                         hasChanges = true;
                     }
+                    // Always update localized text fields
+                    ['name', 'school'].forEach(field => {
+                         if (mockP[field] !== undefined && p[field] !== mockP[field]) {
+                             p[field] = mockP[field];
+                             hasChanges = true;
+                         }
+                    });
                 }
             });
             if (hasChanges) {
@@ -287,7 +309,25 @@ const API = {
         return problem;
     },
 
-    // ==================== Մասնակիցներ ====================
+    updateProblem(problemId, updates) {
+        const problems = this.getProblems();
+        const index = problems.findIndex(p => p.id === parseInt(problemId));
+        if (index !== -1) {
+            problems[index] = { ...problems[index], ...updates, id: parseInt(problemId) };
+            this.provider.saveProblems(problems);
+            return problems[index];
+        }
+        return null;
+    },
+
+    deleteProblem(problemId) {
+        const problems = this.getProblems();
+        const filtered = problems.filter(p => p.id !== parseInt(problemId));
+        this.provider.saveProblems(filtered);
+        return true;
+    },
+
+    // ==================== Participants ====================
     getParticipants() {
         return this.provider.getParticipants();
     },

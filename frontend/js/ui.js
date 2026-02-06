@@ -157,7 +157,7 @@ const UI = {
                     </select>
                     <select id="subject-filter" onchange="App.filterCompetitions()">
                         <option value="all">Բոլոր առարկաները</option>
-                        ${window.API.getSubjects().map(s => `<option value="${s.name}">${s.icon} ${s.name}</option>`).join('')}
+                        ${window.API.getSubjects().map(s => `<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
                     </select>
                     <button class="btn btn-success" onclick="App.showAddCompetitionModal()">+ Ավելացնել մրցույթ</button>
                 </div>
@@ -174,6 +174,9 @@ const UI = {
      * Մրցույթի քարտի ձևավորում
      */
     renderCompetitionCard(competition) {
+        const subjects = window.API.getSubjects();
+        const subjectObj = subjects.find(s => s.id === competition.subject) || { name: competition.subject, icon: '📚' };
+
         const statusLabels = {
             'registration': 'Գրանցումը բաց է',
             'upcoming': 'Սպասվող',
@@ -192,7 +195,7 @@ const UI = {
                         <span class="meta-badge">📅 ${this.formatDate(competition.startDate)}</span>
                         <span class="meta-badge">⏱️ ${competition.duration} րոպե</span>
                         <span class="meta-badge">👥 ${competition.participants}/${competition.maxParticipants}</span>
-                        <span class="meta-badge">📚 ${competition.subject}</span>
+                        <span class="meta-badge">${subjectObj.icon} ${subjectObj.name}</span>
                     </div>
                 </div>
                 <div class="competition-actions">
@@ -229,7 +232,7 @@ const UI = {
                     </select>
                     <select id="subject-filter-problems" onchange="App.filterProblems()">
                         <option value="all">Բոլոր առարկաները</option>
-                        ${window.API.getSubjects().map(s => `<option value="${s.name}">${s.icon} ${s.name}</option>`).join('')}
+                        ${window.API.getSubjects().map(s => `<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
                     </select>
                 </div>
                 
@@ -252,20 +255,22 @@ const UI = {
         };
 
         // Fallback for missing subject - lookup via competition or use default
-        let subject = problem.subject;
-        if (!subject && problem.competitionId) {
+        let subjectKey = problem.subject;
+        if (!subjectKey && problem.competitionId) {
             const competition = window.API.getCompetitionById(problem.competitionId);
             if (competition) {
-                subject = competition.subject;
+                subjectKey = competition.subject;
             }
         }
-        subject = subject || 'Անհայտ առարկա';
+        
+        const subjects = window.API.getSubjects();
+        const subjectObj = subjects.find(s => s.id === subjectKey) || { name: subjectKey || 'Անհայտ առարկա', icon: '📚' };
         
         return `
-            <div class="problem-item" data-difficulty="${problem.difficulty}" data-subject="${subject}">
+            <div class="problem-item" data-difficulty="${problem.difficulty}" data-subject="${subjectKey}">
                 <div class="problem-info">
                     <h3>${problem.title}</h3>
-                    <p>${subject}</p>
+                    <p>${subjectObj.icon} ${subjectObj.name}</p>
                 </div>
                 <div class="problem-meta">
                     <span class="difficulty difficulty-${problem.difficulty}">${difficultyLabels[problem.difficulty]}</span>
@@ -956,7 +961,7 @@ const UI = {
                 <!-- Left: Document View (Image) -->
                 <div style="flex: 1.5; background: #555; padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; overflow: hidden; position: sticky; top: 80px; max-height: calc(100vh - 200px); align-self: flex-start;">
                     <p style="font-size: 1.1em; margin: 0 0 10px 0; color: #eee;">📄 Participant: <strong>${participantName}</strong></p>
-                    <p style="font-size: 0.9em; margin: 0 0 10px 0; color: #ccc;">Competition: ${competition?.name || 'Unknown'}</p>
+                    <p style="font-size: 0.9em; margin: 0 0 10px 0; color: #ccc;">Մրցույթ: ${competition?.name || 'Անհայտ'}</p>
                     
                     <div id="scan-container" style="width: 100%; height: 100%; background: #333; position: relative; border-radius: 2px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow: auto; display: flex; justify-content: center; align-items: flex-start;">
                         ${imageData ? 
@@ -974,7 +979,7 @@ const UI = {
                     <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">📊 Detected Answers</h3>
                     
                     <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bbdefb;">
-                        <p style="margin: 0; font-size: 0.95em;"><strong>Instructions:</strong> Review the detected answers against the scanned paper. Correct any errors in the fields below.</p>
+                        <p style="margin: 0; font-size: 0.95em;"><strong>Հրահանգներ՝</strong> Ստուգեք հայտնաբերված պատասխանները սկանավորված թղթի հետ: Ուղղեք սխալները ստորև դաշտերում:</p>
                     </div>
 
                     <form id="verification-form">
@@ -982,8 +987,8 @@ const UI = {
                             <thead>
                                 <tr style="background: #eceff1;">
                                     <th width="60" style="padding: 12px; text-align: center;">#</th>
-                                    <th style="padding: 12px;">Question</th>
-                                    <th width="150" style="padding: 12px;">Detected Answer</th>
+                                    <th style="padding: 12px;">Հարց</th>
+                                    <th width="150" style="padding: 12px;">Հայտնաբերված պատասխան</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1000,14 +1005,14 @@ const UI = {
                                         <td style="text-align: center; font-weight: bold; color: #555;">${p.number}</td>
                                         <td>
                                             <div style="font-weight: 500;">${p.title}</div>
-                                            <div style="font-size: 0.85em; color: #666;">${p.difficulty === 'easy' ? 'Easy' : (p.difficulty === 'medium' ? 'Medium' : 'Hard')} • ${p.points} points</div>
-                                            ${isInvalid ? '<div style="font-size: 0.85em; color: #c0392b; font-weight: bold;">⚠️ Multiple options selected!</div>' : ''}
+                                            <div style="font-size: 0.85em; color: #666;">${p.difficulty === 'easy' ? 'Հեշտ' : (p.difficulty === 'medium' ? 'Միջին' : 'Բարդ')} • ${p.points} միավոր</div>
+                                            ${isInvalid ? '<div style="font-size: 0.85em; color: #c0392b; font-weight: bold;">⚠️ Ընտրված են մի քանի տարբերակներ!</div>' : ''}
                                         </td>
                                         <td>
                                             <input type="text" id="verify-answer-${p.id}" value="${displayValue}" 
                                                    class="form-control ${isInvalid ? 'invalid-answer' : ''}" 
                                                    style="${inputStyle}" 
-                                                   placeholder="${isInvalid ? 'INVALID' : '-'}" 
+                                                   placeholder="${isInvalid ? 'ԱՆՎԱՎԵՐ' : '-'}" 
                                                    oninput="UI.updateJsonPreview(${competitionId}); UI.checkInvalidAnswers();"
                                                    data-invalid="${isInvalid ? 'true' : 'false'}">
                                         </td>
@@ -1017,12 +1022,12 @@ const UI = {
                         </table>
                     </form>
 
-                    <h3 style="margin-top: 30px; font-size: 1em; color: #666;">JSON Data (Preview)</h3>
+                    <h3 style="margin-top: 30px; font-size: 1em; color: #666;">JSON տվյալներ (նախադիտում)</h3>
                     <textarea id="json-preview" style="width: 100%; height: 100px; font-family: monospace; font-size: 11px; border: 1px solid #ccc; padding: 5px; background: #f5f5f5;" readonly>${jsonOutput}</textarea>
                 </div>
             </div>
             <div class="modal-footer" style="padding: 20px;">
-                <button class="btn btn-secondary" style="padding: 10px 20px; font-size: 1.1em;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">Cancel</button>
+                <button class="btn btn-secondary" style="padding: 10px 20px; font-size: 1.1em;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">Չեղարկել</button>
                 <button id="confirm-grade-btn" class="btn btn-success" style="padding: 10px 25px; font-size: 1.1em;" onclick="App.confirmScanSubmission(${competitionId}, ${participantId})">✅ Confirm & Submit</button>
             </div>
         `;
@@ -1232,7 +1237,7 @@ const UI = {
             if (shortProblems.length !== state.shortAnswerCount) {
                 isValid = false;
                 warnings.push(
-                    `  • Short Answer: Database has ${shortProblems.length}, template has ${state.shortAnswerCount}`
+                    `  • Կարճ պատասխան: Բազայում կա ${shortProblems.length}, ձևանմուշում՝ ${state.shortAnswerCount}`
                 );
             }
         }
@@ -1360,7 +1365,7 @@ const UI = {
                     <!-- Template Summary Box -->
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
                         <div style="font-size: 32px; font-weight: bold;">${templateTotal}</div>
-                        <div style="font-size: 12px; opacity: 0.9;">Total Questions</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Ընդհանուր հարցեր</div>
                         <div style="display: flex; justify-content: space-around; margin-top: 10px; font-size: 13px;">
                             <div>
                                 <div style="font-size: 18px; font-weight: bold;">${state.mcqCount}</div>
@@ -1405,7 +1410,7 @@ const UI = {
                     </div>
                     
                     <hr>
-                    <h4>🔢 Multiple Choice Questions</h4>
+                    <h4>🔢 Բազմակի ընտրության հարցեր</h4>
                     
                     <!-- MCQ Count -->
                     <div style="margin-bottom: 15px;">
@@ -1417,7 +1422,7 @@ const UI = {
                     
                     <!-- MCQ Options -->
                     <div style="margin-bottom: 15px;">
-                        <label>Options per Question</label>
+                        <label>Տարբերակներ մեկ հարցի համար</label>
                         <select class="form-control" id="editor-mcq-options" onchange="UI.editorState.mcqOptions = parseInt(this.value); UI.refreshEditorPreview();">
                             <option value="3" ${state.mcqOptions === 3 ? 'selected' : ''}>3 options (A, B, C)</option>
                             <option value="4" ${state.mcqOptions === 4 ? 'selected' : ''}>4 options (1, 2, 3, 4)</option>
@@ -1426,11 +1431,11 @@ const UI = {
                     </div>
                     
                     <hr>
-                    <h4>📝 Short Answer Questions</h4>
+                    <h4>📝 Կարճ պատասխանով հարցեր</h4>
                     
-                    <!-- Short Answer Count -->
+                    <!-- Կարճ պատասխանների քանակը -->
                     <div style="margin-bottom: 15px;">
-                        <label>Short Answer Count</label>
+                        <label>Կարճ պատասխանների քանակը</label>
                         <input type="number" class="form-control" id="editor-short-count" 
                                min="0" max="20" value="${state.shortAnswerCount}"
                                onchange="UI.editorState.shortAnswerCount = parseInt(this.value); UI.refreshEditorPreview();">
@@ -1448,7 +1453,7 @@ const UI = {
                     
                     <!-- Action Buttons -->
                     <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="UI.saveEditorTemplate()">
-                        💾 Save Template
+                        💾 Պահպանել ձևանմուշը
                     </button>
                     <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="UI.printAnswerSheetTemplate(UI.editorState.subject, UI.editorState.templateName)">
                         🖨️ Print Preview
@@ -1728,7 +1733,7 @@ const UI = {
                 <!-- Left: Document View (Image) -->
                 <div style="flex: 1.5; background: #555; padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; overflow: hidden; position: sticky; top: 80px; max-height: calc(100vh - 200px); align-self: flex-start;">
                     <p style="font-size: 1.1em; margin: 0 0 10px 0; color: #eee;">📄 Participant: <strong>${participantName}</strong></p>
-                    <p style="font-size: 0.9em; margin: 0 0 10px 0; color: #ccc;">Competition: ${competition?.name || 'Unknown'}</p>
+                    <p style="font-size: 0.9em; margin: 0 0 10px 0; color: #ccc;">Մրցույթ: ${competition?.name || 'Անհայտ'}</p>
                     
                     <div id="scan-container" style="width: 100%; height: 100%; background: #333; position: relative; border-radius: 2px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow: auto; display: flex; justify-content: center; align-items: flex-start;">
                         ${submission.imageData ? 
@@ -1746,7 +1751,7 @@ const UI = {
                     <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">📊 Submitted Answers (by School Operator)</h3>
                     
                     <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bbdefb;">
-                        <p style="margin: 0; font-size: 0.95em;"><strong>Instructions:</strong> Review the answers submitted by the school operator against the scanned paper on the left. You can correct answers if needed before grading.</p>
+                        <p style="margin: 0; font-size: 0.95em;"><strong>Հրահանգներ՝</strong> Ստուգեք ներկայացված պատասխանները ձախ կողմում գտնվող սկանավորված թղթի հետ: Անհրաժեշտության դեպքում կարող եք ուղղել պատասխանները գնահատելուց առաջ:</p>
                     </div>
 
                     <form id="grading-form">
@@ -1754,7 +1759,7 @@ const UI = {
                             <thead>
                                 <tr style="background: #eceff1;">
                                     <th width="40" style="padding: 12px; text-align: center;">#</th>
-                                    <th style="padding: 12px;">Question</th>
+                                    <th style="padding: 12px;">Հարց</th>
                                     <th width="120" style="padding: 12px;">Submitted</th>
                                     <th width="120" style="padding: 12px;">Correct</th>
                                 </tr>
@@ -1769,7 +1774,7 @@ const UI = {
                                             <td style="text-align: center; font-weight: bold; color: #555;">${p.number}</td>
                                             <td>
                                                 <div style="font-weight: 500;">${p.title}</div>
-                                                <div style="font-size: 0.85em; color: #666;">${p.difficulty === 'easy' ? 'Easy' : (p.difficulty === 'medium' ? 'Medium' : 'Hard')} • ${p.points} points</div>
+                                                <div style="font-size: 0.85em; color: #666;">${p.difficulty === 'easy' ? 'Հեշտ' : (p.difficulty === 'medium' ? 'Միջին' : 'Բարդ')} • ${p.points} միավոր</div>
                                             </td>
                                             <td style="padding: 8px;">
                                                 <input type="text" id="grade-input-${p.id}" value="${val}" 
@@ -1787,7 +1792,7 @@ const UI = {
                 </div>
             </div>
             <div class="modal-footer" style="padding: 20px;">
-                <button class="btn btn-secondary" style="padding: 10px 20px; font-size: 1.1em;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">Cancel</button>
+                <button class="btn btn-secondary" style="padding: 10px 20px; font-size: 1.1em;" onclick="document.getElementById('modal-content').style.maxWidth=''; document.getElementById('modal-content').style.width=''; App.closeModal()">Չեղարկել</button>
                 <button id="confirm-grade-btn" class="btn btn-success" style="padding: 10px 25px; font-size: 1.1em;" onclick="App.submitGrading(${submissionId})">✅ Confirm & Grade</button>
             </div>
         `;
@@ -2154,7 +2159,7 @@ const UI = {
             
             previewContainer.innerHTML = `
                 <div style="color: #fff; font-size: 11px; margin-bottom: 8px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-                    <span>🔍 OCR Debug (Short Answers)</span>
+                    <span>🔍 OCR կարգաբերում (Կարճ պատասխաններ)</span>
                     <button onclick="
                         const panel = document.getElementById('ocr-preview-panel');
                         const content = document.getElementById('ocr-preview-content');
@@ -2686,9 +2691,10 @@ const UI = {
      * Խնդիր ավելացնելու պատուհանի ցուցադրում
      */
     renderAddProblemModal(competitionId) {
+        const competitions = API.getCompetitions();
         return `
             <div class="modal-header">
-                <h2>➕ Ավելացնել նոր խնդիր</h2>
+                <h2>➕ Add New Problem</h2>
                 <button class="modal-close" onclick="App.closeModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -2697,7 +2703,31 @@ const UI = {
                     
                     <div class="form-group">
                         <label for="new-prob-title">Վերնագիր *</label>
-                        <input type="text" id="new-prob-title" required placeholder="Օրինակ՝ Ֆիբոնաչիի թվեր">
+                        <input type="text" id="new-prob-title" required placeholder="e.g., Quadratic Equations">
+                    </div>
+                    
+                    ${!competitionId ? `
+                    <div class="form-group">
+                        <label for="new-prob-comp">Մրցույթ *</label>
+                        <select id="new-prob-comp" required>
+                            <option value="">Select competition...</option>
+                            ${competitions.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="new-prob-type">Խնդրի տեսակը *</label>
+                            <select id="new-prob-type" required onchange="UI.toggleAnswerInputType()">
+                                <option value="multiple_choice">Բազմակի ընտրություն (A, B, C, D)</option>
+                                <option value="short_answer">Կարճ պատասխան</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-prob-number">Հարցի համարը *</label>
+                            <input type="number" id="new-prob-number" required value="1" min="1">
+                        </div>
                     </div>
                     
                     <div class="form-row">
@@ -2710,38 +2740,148 @@ const UI = {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="new-prob-points">Միավորներ *</label>
-                            <input type="number" id="new-prob-points" required value="100" min="0">
+                            <label for="new-prob-points">Միավոր *</label>
+                            <input type="number" id="new-prob-points" required value="5" min="0">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="new-prob-desc">Խնդիր պահանջը *</label>
-                        <textarea id="new-prob-desc" rows="5" required></textarea>
+                        <label for="new-prob-desc">Նկարագրություն *</label>
+                        <textarea id="new-prob-desc" rows="4" required placeholder="Problem description..."></textarea>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="new-prob-input">Մուտքային տվյալներ *</label>
-                            <textarea id="new-prob-input" rows="3" required placeholder="Օրինակ՝ Մուտքում տրված է N բնական թիվ"></textarea>
+                    <!-- Correct Answer Section -->
+                    <div class="form-group" id="answer-section">
+                        <label>Ճիշտ պատասխան *</label>
+                        <div id="mcq-answer-options" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+                            <label class="answer-option"><input type="radio" name="correct-answer" value="1" required><span>1 (A)</span></label>
+                            <label class="answer-option"><input type="radio" name="correct-answer" value="2"><span>2 (B)</span></label>
+                            <label class="answer-option"><input type="radio" name="correct-answer" value="3"><span>3 (C)</span></label>
+                            <label class="answer-option"><input type="radio" name="correct-answer" value="4"><span>4 (D)</span></label>
+                            <label class="answer-option"><input type="radio" name="correct-answer" value="5"><span>5 (E)</span></label>
                         </div>
-                        <div class="form-group">
-                            <label for="new-prob-output">Ելքային տվյալներ *</label>
-                            <textarea id="new-prob-output" rows="3" required placeholder="Օրինակ՝ Արտածել N-րդ Ֆիբոնաչիի թիվը"></textarea>
+                        <div id="short-answer-input" style="display: none;">
+                            <input type="text" id="new-prob-short-answer" placeholder="Մուտքագրեք ճիշտ պատասխանը" 
+                                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 1.1em;">
+                            <small style="color: #666; margin-top: 5px; display: block;">For numerical answers, enter the exact value</small>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="App.closeModal()">Չեղարկել</button>
-                <button class="btn btn-success" onclick="App.submitNewProblem()">Ավելացնել</button>
+                <button class="btn btn-success" onclick="App.submitNewProblem()">Ավելացնել խնդիր</button>
             </div>
         `;
     },
 
     /**
-     * Մասնակից ավելացնելու պատուհանի ցուցադրում
+     * Toggle between MCQ and short answer input based on problem type
      */
+    toggleAnswerInputType() {
+        const typeSelect = document.getElementById('new-prob-type');
+        const mcqOptions = document.getElementById('mcq-answer-options');
+        const shortInput = document.getElementById('short-answer-input');
+        if (typeSelect.value === 'multiple_choice') {
+            mcqOptions.style.display = 'flex';
+            shortInput.style.display = 'none';
+        } else {
+            mcqOptions.style.display = 'none';
+            shortInput.style.display = 'block';
+        }
+    },
+
+    /**
+     * Toggle between MCQ and short answer for edit modal  
+     */
+    toggleEditAnswerInputType() {
+        const typeSelect = document.getElementById('edit-prob-type');
+        const mcqOptions = document.getElementById('edit-mcq-answer-options');
+        const shortInput = document.getElementById('edit-short-answer-input');
+        if (typeSelect.value === 'multiple_choice') {
+            mcqOptions.style.display = 'flex';
+            shortInput.style.display = 'none';
+        } else {
+            mcqOptions.style.display = 'none';
+            shortInput.style.display = 'block';
+        }
+    },
+
+    /**
+     * Render Edit Problem Modal
+     */
+    renderEditProblemModal(problemId) {
+        const problem = API.getProblemById(problemId);
+        const competitions = API.getCompetitions();
+        const isMCQ = problem.type === 'multiple_choice';
+        return `
+            <div class="modal-header">
+                <h2>✏️ Խմբագրել խնդիրը</h2>
+                <button class="modal-close" onclick="App.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-problem-form">
+                    <input type="hidden" id="edit-prob-id" value="${problem.id}">
+                    <div class="form-group">
+                        <label for="edit-prob-title">Վերնագիր *</label>
+                        <input type="text" id="edit-prob-title" required value="${problem.title || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-prob-comp">Մրցույթ *</label>
+                        <select id="edit-prob-comp" required>
+                            ${competitions.map(c => `<option value="${c.id}" ${c.id === problem.competitionId ? 'selected' : ''}>${c.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-prob-type">Խնդրի տեսակը *</label>
+                            <select id="edit-prob-type" required onchange="UI.toggleEditAnswerInputType()">
+                                <option value="multiple_choice" ${isMCQ ? 'selected' : ''}>Բազմակի ընտրություն (A, B, C, D)</option>
+                                <option value="short_answer" ${!isMCQ ? 'selected' : ''}>Կարճ պատասխան</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-prob-number">Հարցի համարը *</label>
+                            <input type="number" id="edit-prob-number" required value="${problem.number || 1}" min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-prob-difficulty">Բարդություն *</label>
+                            <select id="edit-prob-difficulty" required>
+                                <option value="easy" ${problem.difficulty === 'easy' ? 'selected' : ''}>Հեշտ</option>
+                                <option value="medium" ${problem.difficulty === 'medium' ? 'selected' : ''}>Միջին</option>
+                                <option value="hard" ${problem.difficulty === 'hard' ? 'selected' : ''}>Բարդ</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-prob-points">Միավոր *</label>
+                            <input type="number" id="edit-prob-points" required value="${problem.points || 5}" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-prob-desc">Նկարագրություն *</label>
+                        <textarea id="edit-prob-desc" rows="4" required>${problem.description || ''}</textarea>
+                    </div>
+                    <div class="form-group" id="edit-answer-section">
+                        <label>Ճիշտ պատասխան *</label>
+                        <div id="edit-mcq-answer-options" style="display: ${isMCQ ? 'flex' : 'none'}; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+                            ${[1,2,3,4,5].map(n => `<label class="answer-option ${problem.correctAnswer === String(n) ? 'selected' : ''}"><input type="radio" name="edit-correct-answer" value="${n}" ${problem.correctAnswer === String(n) ? 'checked' : ''}><span>${n} (${String.fromCharCode(64 + n)})</span></label>`).join('')}
+                        </div>
+                        <div id="edit-short-answer-input" style="display: ${!isMCQ ? 'block' : 'none'};">
+                            <input type="text" id="edit-prob-short-answer" value="${!isMCQ ? (problem.correctAnswer || '') : ''}" placeholder="Մուտքագրեք ճիշտ պատասխանը" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 1.1em;">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="App.closeModal()">Չեղարկել</button>
+                <button class="btn btn-danger" onclick="App.deleteProblem(${problem.id})" style="margin-right: auto;">🗑️ Ջնջել</button>
+                <button class="btn btn-success" onclick="App.updateProblem(${problem.id})">💾 Պահպանել</button>
+            </div>
+        `;
+    },
+
     renderAddParticipantModal() {
         const schools = API.getSchools();
         

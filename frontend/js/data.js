@@ -6,11 +6,11 @@ class DataStore {
     constructor() {
         this.data = {
             subjects: [
-                { name: 'Մաթեմատիկա', icon: '📐' },
-                { name: 'Ֆիզիկա', icon: '🔬' },
-                { name: 'Քիմիա', icon: '⚗️' },
-                { name: 'Կենսաբանություն', icon: '🧬' },
-                { name: 'Ինֆորմատիկա', icon: '💻' }
+                { id: 'math', name: 'Մաթեմատիկա', icon: '📐' },
+                { id: 'physics', name: 'Ֆիզիկա', icon: '🔬' },
+                { id: 'chemistry', name: 'Քիմիա', icon: '⚗️' },
+                { id: 'biology', name: 'Կենսաբանություն', icon: '🧬' },
+                { id: 'informatics', name: 'Ինֆորմատիկա', icon: '💻' }
             ],
             grades: [
                 { value: 8, label: '8-րդ դասարան' },
@@ -207,8 +207,8 @@ const MockData = {
     competitions: [
         {
             id: 1,
-            name: "Mathematics Olympiad 2023",
-            description: "National mathematics competition for high school students",
+            name: "Մաթեմատիկայի օլիմպիադա 2023",
+            description: "Հանրապետական մաթեմատիկայի օլիմպիադա ավագ դպրոցի աշակերտների համար",
             date: "2023-04-05",
             startDate: "2023-04-05",
             duration: 120,
@@ -222,8 +222,8 @@ const MockData = {
         },
         {
             id: 2,
-            name: "Physics Challenge 2023",
-            description: "National physics competition for high school students",
+            name: "Ֆիզիկայի մրցույթ 2023",
+            description: "Հանրապետական ֆիզիկայի մրցույթ ավագ դպրոցի աշակերտների համար",
             date: "2023-04-06",
             startDate: "2023-04-06",
             duration: 120,
@@ -237,8 +237,8 @@ const MockData = {
         },
         {
             id: 3,
-            name: "Chemistry Contest 2023",
-            description: "National chemistry competition for high school students",
+            name: "Քիմիայի մրցույթ 2023",
+            description: "Հանրապետական քիմիայի մրցույթ ավագ դպրոցի աշակերտների համար",
             date: "2023-04-07",
             startDate: "2023-04-07",
             duration: 90,
@@ -252,8 +252,8 @@ const MockData = {
         },
         {
             id: 4,
-            name: "Biology Olympiad 2023",
-            description: "National biology competition for high school students",
+            name: "Կենսաբանության օլիմպիադա 2023",
+            description: "Հանրապետական կենսաբանության օլիմպիադա ավագ դպրոցի աշակերտների համար",
             date: "2023-04-08",
             startDate: "2023-04-08",
             duration: 90,
@@ -267,8 +267,8 @@ const MockData = {
         },
         {
             id: 5,
-            name: "Informatics Olympiad 2023",
-            description: "National informatics competition for high school students",
+            name: "Ինֆորմատիկայի օլիմպիադա 2023",
+            description: "Հանրապետական ինֆորմատիկայի օլիմպիադա ավագ դպրոցի աշակերտների համար",
             date: "2023-04-09",
             startDate: "2023-04-09",
             duration: 180,
@@ -285,123 +285,123 @@ const MockData = {
         // Math Olympiad - MCQ (questions 1-10)
         {
             id: 1, number: 1, competitionId: 1,
-            title: "Quadratic Equations", name: "Quadratic Equations",
+            title: "Քառակուսային հավասարումներ", name: "Քառակուսային հավասարումներ",
             difficulty: "easy", points: 5,
-            description: "Solve the following quadratic equation",
+            description: "Լուծեք տրված քառակուսային հավասարումը",
             type: "multiple_choice", correctAnswer: "2"
         },
         {
             id: 2, number: 2, competitionId: 1,
-            title: "Number Theory", name: "Number Theory",
+            title: "Թվերի տեսություն", name: "Թվերի տեսություն",
             difficulty: "easy", points: 5,
-            description: "Find all prime factors of the given number",
+            description: "Գտեք տրված թվի բոլոր պարզ արտադրիչները",
             type: "multiple_choice", correctAnswer: "3"
         },
         {
             id: 3, number: 3, competitionId: 1,
-            title: "Arithmetic Sequences", name: "Arithmetic Sequences",
+            title: "Թվաբանական պրոգրեսիաներ", name: "Թվաբանական պրոգրեսիաներ",
             difficulty: "easy", points: 5,
-            description: "Find the nth term of the arithmetic sequence",
+            description: "Գտեք թվաբանական պրոգրեսիայի n-րդ անդամը",
             type: "multiple_choice", correctAnswer: "1"
         },
         {
             id: 4, number: 4, competitionId: 1,
-            title: "Probability", name: "Probability",
+            title: "Հավանականություն", name: "Հավանականություն",
             difficulty: "easy", points: 5,
-            description: "Calculate the probability of the given event",
+            description: "Հաշվեք տրված պատահարի հավանականությունը",
             type: "multiple_choice", correctAnswer: "4"
         },
         {
             id: 5, number: 5, competitionId: 1,
-            title: "Logarithms", name: "Logarithms",
+            title: "Լոգարիթմներ", name: "Լոգարիթմներ",
             difficulty: "medium", points: 5,
-            description: "Simplify the logarithmic expression",
+            description: "Պարզեցրեք լոգարիթմական արտահայտությունը",
             type: "multiple_choice", correctAnswer: "2"
         },
         {
             id: 6, number: 6, competitionId: 1,
-            title: "Trigonometry", name: "Trigonometry",
+            title: "Եռանկյունաչափություն", name: "Եռանկյունաչափություն",
             difficulty: "medium", points: 5,
-            description: "Find the value of the trigonometric expression",
+            description: "Գտեք եռանկյունաչափական արտահայտության արժեքը",
             type: "multiple_choice", correctAnswer: "3"
         },
         {
             id: 7, number: 7, competitionId: 1,
-            title: "Polynomials", name: "Polynomials",
+            title: "Բազմանդամներ", name: "Բազմանդամներ",
             difficulty: "medium", points: 5,
-            description: "Factor the given polynomial",
+            description: "Վերլուծեք բազմանդամը արտադրիչների",
             type: "multiple_choice", correctAnswer: "1"
         },
         {
             id: 8, number: 8, competitionId: 1,
-            title: "Inequalities", name: "Inequalities",
+            title: "Անհավասարումներ", name: "Անհավասարումներ",
             difficulty: "medium", points: 5,
-            description: "Solve the system of inequalities",
+            description: "Լուծեք անհավասարումների համակարգը",
             type: "multiple_choice", correctAnswer: "4"
         },
         {
             id: 9, number: 9, competitionId: 1,
-            title: "Functions", name: "Functions",
+            title: "Ֆունկցիաներ", name: "Ֆունկցիաներ",
             difficulty: "hard", points: 5,
-            description: "Find the domain and range of the composite function",
+            description: "Գտեք բարդ ֆունկցիայի որոշման և արժեքների տիրույթները",
             type: "multiple_choice", correctAnswer: "2"
         },
         {
             id: 10, number: 10, competitionId: 1,
-            title: "Matrices", name: "Matrices",
+            title: "Մատրիցներ", name: "Մատրիցներ",
             difficulty: "hard", points: 5,
-            description: "Compute the determinant of the given matrix",
+            description: "Հաշվեք տրված մատրիցի որոշիչը",
             type: "multiple_choice", correctAnswer: "3"
         },
         // Math Olympiad - Short Answer (questions 11-15)
         {
             id: 11, number: 11, competitionId: 1,
-            title: "Geometry Problem", name: "Geometry Problem",
+            title: "Երկրաչափական խնդիր", name: "Երկրաչափական խնդիր",
             difficulty: "medium", points: 10,
-            description: "Calculate the area of the given geometric figure",
+            description: "Հաշվեք տրված երկրաչափական պատկերի մակերեսը",
             type: "short_answer", correctAnswer: "42"
         },
         {
             id: 12, number: 12, competitionId: 1,
-            title: "Combinatorics", name: "Combinatorics",
+            title: "Կոմբինատորիկա", name: "Կոմբինատորիկա",
             difficulty: "hard", points: 10,
-            description: "How many ways can you arrange the objects?",
+            description: "Քանի՞ եղանակով կարելի է դասավորել օբյեկտները",
             type: "short_answer", correctAnswer: "120"
         },
         {
             id: 13, number: 13, competitionId: 1,
-            title: "Diophantine Equation", name: "Diophantine Equation",
+            title: "Դիոֆանտյան հավասարում", name: "Դիոֆանտյան հավասարում",
             difficulty: "hard", points: 10,
-            description: "Find the integer solution to the equation",
+            description: "Գտեք հավասարման ամբողջ լուծումը",
             type: "short_answer", correctAnswer: "7"
         },
         {
             id: 14, number: 14, competitionId: 1,
-            title: "Sequence Sum", name: "Sequence Sum",
+            title: "Հաջորդականության գումար", name: "Հաջորդականության գումար",
             difficulty: "hard", points: 10,
-            description: "Find the sum of the first n terms of the series",
+            description: "Գտեք շարքի առաջին n անդամների գումարը",
             type: "short_answer", correctAnswer: "256"
         },
         {
             id: 15, number: 15, competitionId: 1,
-            title: "Modular Arithmetic", name: "Modular Arithmetic",
+            title: "Մոդուլային թվաբանություն", name: "Մոդուլային թվաբանություն",
             difficulty: "hard", points: 10,
-            description: "Find the remainder when dividing",
+            description: "Գտեք բաժանման մնացորդը",
             type: "short_answer", correctAnswer: "3"
         },
         // Physics Challenge problems
         {
             id: 16, number: 1, competitionId: 2,
-            title: "Newton's Laws", name: "Newton's Laws",
+            title: "Նյուտոնի օրենքներ", name: "Նյուտոնի օրենքներ",
             difficulty: "easy", points: 10,
-            description: "Apply Newton's laws to solve mechanics problems",
+            description: "Կիրառեք Նյուտոնի օրենքները մեխանիկայի խնդիրները լուծելու համար",
             type: "multiple_choice", correctAnswer: "2"
         },
         {
             id: 17, number: 2, competitionId: 2,
-            title: "Thermodynamics", name: "Thermodynamics",
+            title: "Ջերմադինամիկա", name: "Ջերմադինամիկա",
             difficulty: "medium", points: 15,
-            description: "Calculate heat transfer in the given system",
+            description: "Հաշվեք ջերմության փոխանցումը տրված համակարգում",
             type: "multiple_choice", correctAnswer: "1"
         }
     ],
@@ -409,56 +409,56 @@ const MockData = {
         {
             id: 1,
             competitionId: 1,
-            name: "Anna Smith",
-            school: "Yerevan Physics-Math School",
+            name: "Անահիտ Գրիգորյան",
+            school: "Երևանի Ֆիզմաթ դպրոց",
             grade: 10,
             score: 95
         },
         {
             id: 2,
             competitionId: 1,
-            name: "David Johnson",
-            school: "Gyumri School #3",
+            name: "Դավիթ Սարգսյան",
+            school: "Գյումրու թիվ 3 դպրոց",
             grade: 11,
             score: 92
         },
         {
             id: 3,
             competitionId: 1,
-            name: "Maria Garcia",
-            school: "Vanadzor High School",
+            name: "Մարիամ Հովհաննիսյան",
+            school: "Վանաձորի ավագ դպրոց",
             grade: 10,
             score: 88
         },
         {
             id: 4,
             competitionId: 1,
-            name: "Alex Brown",
-            school: "Yerevan State University School",
+            name: "Ալեքսան Պետրոսյան",
+            school: "ԵՊՀ Առընթեր դպրոց",
             grade: 12,
             score: 85
         },
         {
             id: 5,
             competitionId: 1,
-            name: "Sarah Wilson",
-            school: "Yerevan Physics-Math School",
+            name: "Սոնա Խաչատրյան",
+            school: "Երևանի Ֆիզմաթ դպրոց",
             grade: 11,
             score: 82
         },
         {
             id: 6,
             competitionId: 2,
-            name: "Michael Lee",
-            school: "Gyumri School #3",
+            name: "Միքայել Հարությունյան",
+            school: "Գյումրու թիվ 3 դպրոց",
             grade: 10,
             score: 90
         },
         {
             id: 7,
             competitionId: 2,
-            name: "Emily Davis",
-            school: "Yerevan Physics-Math School",
+            name: "Էլեն Ավետիսյան",
+            school: "Երևանի Ֆիզմաթ դպրոց",
             grade: 11,
             score: 87
         }

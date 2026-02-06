@@ -210,6 +210,10 @@ const App = {
      */
     viewCompetitionDetails(competitionId) {
         const competition = API.getCompetitionById(competitionId);
+        
+        const subjects = API.getSubjects();
+        const subjectObj = subjects.find(s => s.id === competition.subject) || { name: competition.subject, icon: '📚' };
+        
         const problems = API.getProblemsByCompetition(competitionId);
         const participants = API.getParticipantsByCompetition(competitionId);
         
@@ -231,7 +235,7 @@ const App = {
             <div class="modal-body">
                 <p><strong>Նկարագրություն՝</strong> ${competition.description}</p>
                 <p><strong>Կարգավիճակ՝</strong> <span class="status-badge status-${competition.status}">${statusLabels[competition.status]}</span></p>
-                <p><strong>Առարկա՝</strong> ${competition.subject}</p>
+                <p><strong>Առարկա՝</strong> ${subjectObj.icon} ${subjectObj.name}</p>
                 <p><strong>Սկիզբ՝</strong> ${UI.formatDate(competition.startDate)}</p>
                 <p><strong>Տևողություն՝</strong> ${competition.duration} րոպե</p>
                 <p><strong>Մասնակիցներ՝</strong> ${competition.participants}/${competition.maxParticipants}</p>
@@ -243,11 +247,17 @@ const App = {
                         ${problems.map(p => `
                             <div class="problem-item">
                                 <div class="problem-info">
-                                    <h3>${p.title}</h3>
+                                    <h3>#${p.number || '-'}: ${p.title}</h3>
+                                    <p style="font-size: 0.85em; color: #666;">
+                                        Տեսակ՝ ${p.type === 'multiple_choice' ? 'Բազմակի ընտրություն' : 'Կարճ պատասխան'}
+                                        ${p.correctAnswer ? ` | Ճիշտ՝ <strong>${p.correctAnswer}</strong>` : ''}
+                                    </p>
                                 </div>
                                 <div class="problem-meta">
-                                    <span class="difficulty difficulty-${p.difficulty}">${p.difficulty}</span>
+                                    <span class="difficulty difficulty-${p.difficulty}">${{easy:'Հեշտ',medium:'Միջին',hard:'Բարդ'}[p.difficulty] || p.difficulty}</span>
                                     <span class="points-badge">${p.points} միավոր</span>
+                                    <button class="btn btn-sm" onclick="App.closeModal(); App.showEditProblemModal(${p.id})" title="Խմբագրել">✏️</button>
+                                    <button class="btn btn-sm btn-danger" onclick="App.deleteProblem(${p.id})" title="Ջնջել">🗑️</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -300,37 +310,46 @@ const App = {
      * Հաստատել նոր խնդրի ավելացումը
      */
     submitNewProblem() {
-        const competitionId = parseInt(document.getElementById('new-prob-comp-id').value);
+        const competitionIdField = document.getElementById('new-prob-comp-id').value || document.getElementById('new-prob-comp')?.value;
+        const competitionId = competitionIdField ? parseInt(competitionIdField) : null;
         const title = document.getElementById('new-prob-title').value.trim();
+        const type = document.getElementById('new-prob-type').value;
+        const number = parseInt(document.getElementById('new-prob-number').value) || 1;
         const difficulty = document.getElementById('new-prob-difficulty').value;
         const points = parseInt(document.getElementById('new-prob-points').value);
         const description = document.getElementById('new-prob-desc').value.trim();
-        const input = document.getElementById('new-prob-input').value.trim();
-        const output = document.getElementById('new-prob-output').value.trim();
         
-        if (!title || !description || !input || !output || !points) {
-            UI.showError('Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը');
+        // Get correct answer based on type
+        let correctAnswer = '';
+        if (type === 'multiple_choice') {
+            const selectedRadio = document.querySelector('input[name="correct-answer"]:checked');
+            correctAnswer = selectedRadio ? selectedRadio.value : '';
+        } else {
+            correctAnswer = document.getElementById('new-prob-short-answer').value.trim();
+        }
+        
+        if (!title || !description || !points || !correctAnswer) {
+            UI.showError('Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը, ներառյալ ճիշտ պատասխանը');
             return;
         }
 
-        const competition = API.getCompetitionById(competitionId);
+        const competition = competitionId ? API.getCompetitionById(competitionId) : null;
         
         API.addProblem({
             title,
+            name: title,
+            number,
             competitionId: competitionId || null,
-            subject: competition ? competition.subject : 'Մաթեմատիկա', // Fallback or select
+            subject: competition ? competition.subject : 'Mathematics',
+            type,
             difficulty,
             points,
             description,
-            input,
-            output,
-            examples: [
-                { input: 'Մուտքի օրինակ', output: 'Ելքի օրինակ' } // Placeholder for demo
-            ]
+            correctAnswer
         });
 
         this.closeModal();
-        UI.showSuccess('Խնդիրը հաջողությամբ ավելացվեց');
+        UI.showSuccess('Problem added successfully');
         
         // Refresh view if coming from competition details
         if (competitionId) {
@@ -338,6 +357,77 @@ const App = {
         } else {
             this.navigateTo('problems');
         }
+    },
+
+    /**
+     * Update existing problem
+     */
+    updateProblem(problemId) {
+        const competitionId = parseInt(document.getElementById('edit-prob-comp').value);
+        const title = document.getElementById('edit-prob-title').value.trim();
+        const type = document.getElementById('edit-prob-type').value;
+        const number = parseInt(document.getElementById('edit-prob-number').value) || 1;
+        const difficulty = document.getElementById('edit-prob-difficulty').value;
+        const points = parseInt(document.getElementById('edit-prob-points').value);
+        const description = document.getElementById('edit-prob-desc').value.trim();
+        
+        // Get correct answer based on type
+        let correctAnswer = '';
+        if (type === 'multiple_choice') {
+            const selectedRadio = document.querySelector('input[name="edit-correct-answer"]:checked');
+            correctAnswer = selectedRadio ? selectedRadio.value : '';
+        } else {
+            correctAnswer = document.getElementById('edit-prob-short-answer').value.trim();
+        }
+        
+        if (!title || !description || !points || !correctAnswer) {
+            UI.showError('Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը, ներառյալ ճիշտ պատասխանը');
+            return;
+        }
+
+        const competition = API.getCompetitionById(competitionId);
+        
+        API.updateProblem(problemId, {
+            title,
+            name: title,
+            number,
+            competitionId,
+            subject: competition ? competition.subject : 'Mathematics',
+            type,
+            difficulty,
+            points,
+            description,
+            correctAnswer
+        });
+
+        this.closeModal();
+        UI.showSuccess('Խնդիրը հաջողությամբ թարմացվեց');
+        
+        // Refresh problems view
+        this.navigateTo('problems');
+    },
+
+    /**
+     * Delete problem
+     */
+    deleteProblem(problemId) {
+        if (confirm('Վստա՞հ եք, որ ցանկանում եք ջնջել այս խնդիրը:')) {
+            API.deleteProblem(problemId);
+            this.closeModal();
+            UI.showSuccess('Խնդիրը հաջողությամբ ջնջվեց');
+            this.navigateTo('problems');
+        }
+    },
+
+    /**
+     * Show edit problem modal
+     */
+    showEditProblemModal(problemId) {
+        const modal = document.getElementById('modal-container');
+        const modalContent = document.getElementById('modal-content');
+        modalContent.innerHTML = UI.renderEditProblemModal(problemId);
+        modal.classList.remove('hidden');
+        document.querySelector('.modal-backdrop').onclick = () => this.closeModal();
     },
 
     /**
